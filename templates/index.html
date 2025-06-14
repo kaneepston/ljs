@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LJS Parashat Generator - {{ parasha_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-hebrew {
+            font-family: 'Frank Ruhl Libre', serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
+
+    <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-3xl mx-auto">
+        
+        <header class="mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">
+                LJS Parashat Generator
+            </h1>
+            <p class="mt-4 text-gray-600 max-w-xl mx-auto">
+                This service retrieves the parashah for the upcoming Shabbat using the Sefaria API, allowing you to download it as a PPTX file. Kindly review the generated text to ensure it has been returned correctly.
+            </p>
+        </header>
+
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg border">
+            <h2 class="text-2xl font-semibold text-blue-700">
+                {{ parasha_name }}
+            </h2>
+            <p class="text-gray-500 font-mono text-sm mt-2">
+                {{ parasha_ref }}
+            </p>
+            <p class="text-gray-600 mt-2">
+                {{ gregorian_date }}
+            </p>
+            <p class="text-gray-600">
+                {{ hebrew_date }}
+            </p>
+        </section>
+
+        <!-- Preview Section -->
+        <section class="my-10 text-left">
+            <h3 class="text-xl font-semibold mb-4 text-center">Preview</h3>
+            <div class="bg-white rounded-lg border border-gray-200 p-6 flex flex-col md:flex-row gap-8 max-h-64 overflow-y-auto">
+                <!-- English Preview -->
+                <div class="w-full md:w-1/2">
+                    <h4 class="font-bold mb-2 border-b pb-2">English</h4>
+                    <p class="text-gray-700 leading-relaxed mt-2 text-sm">{{ english_preview }}</p>
+                </div>
+                <!-- Hebrew Preview -->
+                <div class="w-full md:w/2 text-right">
+                     <h4 class="font-bold mb-2 border-b pb-2">עברית</h4>
+                     <p class="font-hebrew text-lg leading-relaxed mt-2" dir="rtl">{{ hebrew_preview }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <a href="/generate"
+               id="generate-btn"
+               class="inline-block bg-blue-600 text-white font-bold text-lg px-10 py-4 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
+               onclick="showLoading()">
+                Generate Presentation
+            </a>
+            <p id="loading-text" class="text-gray-500 mt-4" style="display: none;">
+                Generating... please wait. The download will begin shortly.
+            </p>
+        </section>
+        
+    </div>
+
+    <script>
+        function showLoading() {
+            const btn = document.getElementById('generate-btn');
+            const loadingText = document.getElementById('loading-text');
+
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerText = 'Generating...';
+            loadingText.style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
+
