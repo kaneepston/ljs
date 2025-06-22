@@ -3,87 +3,1511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LJS Parashat Generator - {{ parasha_name }}</title>
+    <title>📖 LJS Parashat Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
         .font-hebrew {
             font-family: 'Frank Ruhl Libre', serif;
         }
+        .instruction-step {
+            transition: all 0.3s ease;
+        }
+        .instruction-step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .verse-range-row {
+            transition: all 0.3s ease;
+        }
+        
+        /* Loading Preloader */
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .preloader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .star-of-david {
+            width: 80px;
+            animation: rotate 2s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .start-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 20px 40px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .parashat-section {
+            display: none;
+        }
+
+        .date-picker-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .date-picker-section h3 {
+            margin-bottom: 15px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .date-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .date-input-group input[type="date"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .load-date-btn {
+            background: #38a169;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .load-date-btn:hover {
+            background: #2f855a;
+        }
+
+        .other-dates-btn {
+            background: #38a169;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            margin-top: 15px;
+        }
+
+        .other-dates-btn:hover {
+            background: #2f855a;
+        }
+
+        .generate-section {
+            display: none;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        #parashat-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9' /%3E%3C/svg%3E%0A");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 3.5rem; 
+        }
+
+        .special-readings-section,
+        .custom-verses-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .special-readings-group,
+        .custom-verses-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .holiday-select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            color: #333;
+            transition: border-color 0.3s ease;
+        }
+        
+        .holiday-select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .custom-input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            color: #333;
+            transition: border-color 0.3s ease;
+        }
+        
+        .custom-input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .to-label {
+            color: #666;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+        
+        .load-custom-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .load-custom-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .apply-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            margin-top: 10px;
+        }
+        
+        .apply-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+        
+        .apply-btn:disabled {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
 
-    <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-3xl mx-auto">
+    <!-- Loading Preloader -->
+    <div id="preloader" class="preloader hidden">
+        <img src="{{ url_for('static', filename='images/preloader.svg') }}" class="star-of-david" alt="Loading...">
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
         
-        <header class="mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">
-                LJS Parashat Generator
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-4">
+                📖 LJS Parashat Generator
             </h1>
             <p class="mt-4 text-gray-600 max-w-xl mx-auto">
-                This service retrieves the parashah for the upcoming Shabbat using the Sefaria API, allowing you to download it as a PPTX file. Kindly review the generated text to ensure it has been returned correctly.
+                This service generates customizable Parashat reading slides for LJS services, which can be added to the main presentation.
             </p>
         </header>
 
-        <section class="mb-10 bg-gray-50 p-6 rounded-lg border">
-            <h2 class="text-2xl font-semibold text-blue-700">
-                {{ parasha_name }}
+        <!-- Visual Instructions -->
+        <section class="mb-12 bg-white rounded-2xl shadow-xl p-8">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">
+                🎯 How to Use This Tool
             </h2>
-            <p class="text-gray-500 font-mono text-sm mt-2">
-                {{ parasha_ref }}
-            </p>
-            <p class="text-gray-600 mt-2">
-                {{ gregorian_date }}
-            </p>
-            <p class="text-gray-600">
-                {{ hebrew_date }}
-            </p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="instruction-step bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border-2 border-blue-200">
+                    <div class="text-4xl mb-4">1️⃣</div>
+                    <h3 class="text-xl font-semibold text-blue-800 mb-3">Select Parashat</h3>
+                    <p class="text-gray-700">Select any weekly Parashat from the dropdown. The current week is automatically loaded, or select future weeks.</p>
+                </div>
+                <div class="instruction-step bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border-2 border-green-200">
+                    <div class="text-4xl mb-4">2️⃣</div>
+                    <h3 class="text-xl font-semibold text-green-800 mb-3">Select Verses</h3>
+                    <p class="text-gray-700">Select specific verse ranges using the chapter and verse dropdowns. You can select multiple ranges.</p>
+                </div>
+                <div class="instruction-step bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border-2 border-purple-200">
+                    <div class="text-4xl mb-4">3️⃣</div>
+                    <h3 class="text-xl font-semibold text-purple-800 mb-3">Generate Presentation</h3>
+                    <p class="text-gray-700">Click "Generate PowerPoint" to create a presentation with your selected verses in both English and Hebrew.</p>
+                </div>
+            </div>
+            
+            <!-- Start Button -->
+            <div class="start-section">
+                <button id="start-btn" class="start-btn" onclick="startApp()">
+                    🚀 Start
+                </button>
+            </div>
         </section>
 
-        <!-- Preview Section -->
-        <section class="my-10 text-left">
-            <h3 class="text-xl font-semibold mb-4 text-center">Preview</h3>
-            <div class="bg-white rounded-lg border border-gray-200 p-6 flex flex-col md:flex-row gap-8 max-h-64 overflow-y-auto">
-                <!-- English Preview -->
-                <div class="w-full md:w-1/2">
-                    <h4 class="font-bold mb-2 border-b pb-2">English</h4>
-                    <p class="text-gray-700 leading-relaxed mt-2 text-sm">{{ english_preview }}</p>
+        <!-- Parashat Selection (initially hidden) -->
+        <section id="parashat-section" class="parashat-section mb-8 bg-white rounded-2xl shadow-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📅 Select Parashat</h2>
+            
+            <div class="grid md:grid-cols-1 gap-6">
+                <div>
+                    <p class="text-gray-700 mb-2 font-medium">Choose Parashat from the dropdown:</p>
+                    <select id="parashat-select" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                            onchange="loadSelectedParashat()">
+                        <option value="">Loading...</option>
+                    </select>
                 </div>
-                <!-- Hebrew Preview -->
-                <div class="w-full md:w/2 text-right">
-                     <h4 class="font-bold mb-2 border-b pb-2">עברית</h4>
-                     <p class="font-hebrew text-lg leading-relaxed mt-2" dir="rtl">{{ hebrew_preview }}</p>
+            </div>
+            
+            <!-- Date Picker Section -->
+            <div id="date-picker-section" class="date-picker-section" style="display: none;">
+                <h3>📅 Or select a specific date:</h3>
+                <div class="date-input-group">
+                    <input type="date" id="custom-date" class="date-input">
+                    <button id="load-date-btn" class="load-date-btn" onclick="loadParashatForDate()">
+                        Apply
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Special Readings Section -->
+            <div id="special-readings-section" class="special-readings-section" style="display: none;">
+                <!-- Festival readings section hidden for now -->
+            </div>
+            
+            <!-- Custom Verses Section -->
+            <div id="custom-verses-section" class="custom-verses-section" style="display: none;">
+                <!-- Custom verses section hidden for now -->
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <div class="button-group">
+                    <button id="other-dates-btn" class="action-btn" onclick="toggleDatePicker()" style="display: none;">
+                        📅 Other dates
+                    </button>
+                    <!-- Festival readings and custom verses buttons hidden for now -->
+                    <!--
+                    <button id="special-readings-btn" class="action-btn" onclick="toggleSpecialReadings()" style="display: none;">
+                        📖 Festival readings
+                    </button>
+                    <button id="custom-verses-btn" class="action-btn" onclick="toggleCustomVerses()" style="display: none;">
+                        ✏️ Custom verses
+                    </button>
+                    -->
                 </div>
             </div>
         </section>
 
-        <section>
-            <a href="/generate"
-               id="generate-btn"
-               class="inline-block bg-blue-600 text-white font-bold text-lg px-10 py-4 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
-               onclick="showLoading()">
-                Generate Presentation
-            </a>
-            <p id="loading-text" class="text-gray-500 mt-4" style="display: none;">
-                Generating... please wait. The download will begin shortly.
+        <!-- Selected Parashat Info & Preview -->
+        <section id="parashat-details" class="mb-8 bg-white rounded-2xl shadow-xl p-8" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Parashat Details</h2>
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-indigo-800 mb-2" id="selected-parashat-title"></h3>
+                        <p class="text-gray-600 mb-2" id="selected-parashat-ref"></p>
+                        <p class="text-gray-600" id="selected-parashat-gregorian"></p>
+                        <p class="text-gray-600" id="selected-parashat-date"></p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold text-indigo-600" id="selected-total-verses">0</div>
+                        <div class="text-gray-600">Total Verses Available</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Preview Section -->
+        <section id="preview-section" class="mb-8 bg-white rounded-2xl shadow-xl p-8" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">👀 Preview</h2>
+            <div class="bg-gray-50 rounded-xl p-6">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-bold mb-3 text-gray-800 border-b pb-2">English</h4>
+                        <div class="bg-white p-4 rounded-lg border max-h-64 overflow-y-auto">
+                            <p class="text-gray-700 leading-relaxed text-sm" id="english-preview"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-3 text-gray-800 border-b pb-2">עברית</h4>
+                        <div class="bg-white p-4 rounded-lg border max-h-64 overflow-y-auto">
+                            <p class="font-hebrew text-lg leading-relaxed text-right" dir="rtl" id="hebrew-preview"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Verse Range Selection -->
+        <section id="verse-selection" class="mb-8 bg-white rounded-2xl shadow-xl p-8" style="display: none;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 Select Verse Ranges</h2>
+            <div class="bg-green-50 p-6 rounded-xl border border-green-200">
+                <p class="text-gray-700 mb-4">
+                    <strong>Instructions:</strong> Select which verses to include in your presentation. You can select multiple ranges using the chapter and verse dropdowns.
+                </p>
+                
+                <div id="verse-ranges-container">
+                    <!-- Verse range rows will be added here -->
+                </div>
+                
+                <div class="mt-4 flex gap-4">
+                    <button onclick="addVerseRange()" 
+                            class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                        Add Another Range
+                    </button>
+                    <button onclick="setFullRange()" 
+                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                        Use All Verses
+                    </button>
+                    <button onclick="clearAllRanges()" 
+                            class="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">
+                        Clear All
+                    </button>
+                </div>
+                
+                <div id="range-preview" class="mt-4 text-sm text-gray-600"></div>
+            </div>
+        </section>
+
+        <!-- Generate Button Section -->
+        <section id="generate-section" class="generate-section">
+            <button onclick="generatePowerPoint()"
+                   id="generate-btn"
+                   disabled
+                   class="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl px-12 py-6 rounded-2xl shadow-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none">
+                🚀 Generate PowerPoint Presentation
+            </button>
+            <p id="loading-text" class="text-gray-600 mt-4 text-lg" style="display: none;">
+                ⏳ Generating your presentation... Please wait. The download will begin shortly.
             </p>
         </section>
         
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-sm text-gray-500">
+            <p>This tool utilizes The JPS TANAKH: Gender-Sensitive Edition (2006) translation, provided by the Sefaria API.</p>
+            <p>For assistance or inquiries, please contact Ezra Yanovsky at <a href="mailto:ezra.yanovsky@icloud.com" class="text-blue-600 hover:underline">ezra.yanovsky@icloud.com</a>.</p>
+        </footer>
+
     </div>
 
     <script>
-        function showLoading() {
-            const btn = document.getElementById('generate-btn');
-            const loadingText = document.getElementById('loading-text');
+        let selectedWeeksAhead = null;
+        let parashatData = null;
+        let totalVerses = 0;
+        let verseRangeCounter = 0;
+        let specialReadingsData = {};
+        let currentSelection = null;
 
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            btn.innerText = 'Generating...';
-            loadingText.style.display = 'block';
+        // Hide preloader immediately when page loads
+        window.addEventListener('load', function() {
+            document.getElementById('preloader').classList.add('hidden');
+        });
+
+        function startApp() {
+            // Hide start button
+            document.getElementById('start-btn').style.display = 'none';
+            
+            // Show preloader
+            document.getElementById('preloader').classList.remove('hidden');
+            
+            // Load next 4 weeks
+            loadNext4Weeks();
+        }
+
+        function loadNext4Weeks() {
+            fetch('/get_next_4_weeks')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('parashat-select');
+                    select.innerHTML = '';
+                    
+                    // Add options for next 4 weeks
+                    data.forEach((item, index) => {
+                        const option = document.createElement('option');
+                        option.value = item.weeks_ahead;
+                        const label = index === 0 ? `(Reading next) ${item.title} - ${item.date_display}` : `${item.title} - ${item.date_display}`;
+                        option.textContent = label;
+                        option.setAttribute('data-title', item.title);
+                        option.setAttribute('data-date', item.date_display);
+                        select.appendChild(option);
+                    });
+                    
+                    // Show parashat section
+                    document.getElementById('parashat-section').style.display = 'block';
+                    
+                    // Show "I need other dates" button
+                    document.getElementById('other-dates-btn').style.display = 'inline-block';
+                    
+                    // Hide preloader
+                    document.getElementById('preloader').classList.add('hidden');
+                    
+                    // Automatically load the first parashat (current week)
+                    if (data.length > 0) {
+                        loadSelectedParashat();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading next 4 weeks:', error);
+                    alert('Error loading Parashat data: ' + error.message);
+                    document.getElementById('preloader').classList.add('hidden');
+                });
+        }
+
+        function loadSelectedParashat() {
+            const select = document.getElementById('parashat-select');
+            const selectedValue = select.value;
+            
+            if (!selectedValue) return;
+            
+            // Check if this is a custom selection (festival or custom verses)
+            if (selectedValue.startsWith('custom-')) {
+                // For custom selections, we already have the data in currentSelection
+                if (currentSelection) {
+                    updateUIWithSelection(currentSelection);
+                }
+                return;
+            }
+            
+            // Check if this is a date-based selection
+            if (selectedValue.startsWith('date-')) {
+                // For date-based selections, we already have the data loaded
+                // Just update the UI with the stored data
+                if (parashatData) {
+                    updateParashatDisplay();
+                    showParashatDetails();
+                    initializeVerseRanges();
+                }
+                return;
+            }
+            
+            // Handle weeks_ahead selections (original functionality)
+            const weeksAhead = parseInt(selectedValue);
+            if (!weeksAhead && weeksAhead !== 0) return;
+            
+            selectedWeeksAhead = weeksAhead;
+
+            // Show preloader
+            document.getElementById('preloader').classList.remove('hidden');
+
+            // Fetch parashat data
+            fetchParashatData(weeksAhead);
+        }
+
+        async function fetchParashatData(weeksAhead) {
+            try {
+                const response = await fetch(`/get_parashat_data/${weeksAhead}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error fetching parashat data:', data.error);
+                    alert('Error loading Parashat data: ' + data.error);
+                    return;
+                }
+                
+                // Store parashat data
+                parashatData = data;
+                totalVerses = data.total_verses;
+                
+                // Set currentSelection for generate function
+                currentSelection = {
+                    ...data,
+                    type: 'regular',
+                    weeks_ahead: weeksAhead
+                };
+                
+                // Update UI
+                updateParashatDisplay();
+                showParashatDetails();
+                initializeVerseRanges();
+                
+            } catch (error) {
+                console.error('Error fetching parashat data:', error);
+                alert('Error loading Parashat data: ' + error.message);
+            } finally {
+                // Hide preloader
+                document.getElementById('preloader').classList.add('hidden');
+            }
+        }
+
+        function toggleDatePicker() {
+            const datePickerSection = document.getElementById('date-picker-section');
+            const otherDatesBtn = document.getElementById('other-dates-btn');
+            
+            if (datePickerSection.style.display === 'none' || !datePickerSection.style.display) {
+                datePickerSection.style.display = 'block';
+                otherDatesBtn.textContent = '❌ Cancel';
+            } else {
+                datePickerSection.style.display = 'none';
+                otherDatesBtn.textContent = '📅 Other dates';
+            }
+        }
+
+        function loadParashatForDate() {
+            const selectedDate = document.getElementById('custom-date').value;
+            if (!selectedDate) {
+                alert('Please select a date first.');
+                return;
+            }
+
+            // Show preloader
+            document.getElementById('preloader').classList.remove('hidden');
+            
+            fetch(`/get_parashat_for_date?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        document.getElementById('preloader').classList.add('hidden');
+                        return;
+                    }
+                    
+                    const select = document.getElementById('parashat-select');
+                    
+                    // Check if this date is already in the dropdown
+                    let existingOption = null;
+                    for (let i = 0; i < select.options.length; i++) {
+                        const option = select.options[i];
+                        if (option.getAttribute('data-date') === data.date_display) {
+                            existingOption = option;
+                            break;
+                        }
+                    }
+
+                    if (!existingOption) {
+                        // Add the new parashat to the dropdown if it doesn't exist
+                        const option = document.createElement('option');
+                        option.value = `date-${selectedDate}`; // Use a special prefix for date-based selections
+                        option.textContent = `${data.title} - ${data.date_display}`;
+                        option.setAttribute('data-title', data.title);
+                        option.setAttribute('data-date', data.date_display);
+                        option.setAttribute('data-ref', data.ref);
+                        select.appendChild(option);
+                        existingOption = option;
+                    }
+                    
+                    // Select the option (either existing or newly added)
+                    select.value = existingOption.value;
+                    
+                    // Store parashat data
+                    parashatData = data;
+                    totalVerses = data.total_verses;
+                    selectedWeeksAhead = data.weeks_ahead; // This will be null for date-based selections
+                    
+                    // Set currentSelection for generate function
+                    currentSelection = {
+                        ...data,
+                        type: 'date',
+                        weeks_ahead: data.weeks_ahead
+                    };
+                    
+                    // Update UI
+                    updateParashatDisplay();
+                    showParashatDetails();
+                    initializeVerseRanges();
+                    
+                    // Hide preloader
+                    document.getElementById('preloader').classList.add('hidden');
+                    
+                    // Show the "I need other dates" button again
+                    document.getElementById('other-dates-btn').style.display = 'inline-block';
+                    document.getElementById('other-dates-btn').textContent = '📅 Other dates';
+                    
+                    // Hide date picker
+                    document.getElementById('date-picker-section').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading parashat for date:', error);
+                    alert('Error loading Parashat data: ' + error.message);
+                    document.getElementById('preloader').classList.add('hidden');
+                });
+        }
+
+        function updateParashatDisplay() {
+            if (!parashatData) return;
+            
+            document.getElementById('selected-parashat-title').textContent = parashatData.title;
+            document.getElementById('selected-parashat-ref').textContent = parashatData.ref;
+            
+            // Handle date display - check if we have date_display from date picker or need to get from dropdown
+            if (parashatData.date_display) {
+                // Extract gregorian and Hebrew dates from the combined display
+                const parts = parashatData.date_display.split(' · ');
+                if (parts.length === 2) {
+                    document.getElementById('selected-parashat-gregorian').textContent = parts[0];
+                    document.getElementById('selected-parashat-date').textContent = parts[1];
+                } else {
+                    document.getElementById('selected-parashat-gregorian').textContent = parashatData.date_display;
+                    document.getElementById('selected-parashat-date').textContent = '';
+                }
+            } else {
+                const optionData = getSelectedOptionData();
+                const parts = optionData.date.split(' · ');
+                if (parts.length === 2) {
+                    document.getElementById('selected-parashat-gregorian').textContent = parts[0];
+                    document.getElementById('selected-parashat-date').textContent = parts[1];
+                } else {
+                    document.getElementById('selected-parashat-gregorian').textContent = optionData.date;
+                    document.getElementById('selected-parashat-date').textContent = '';
+                }
+            }
+            
+            document.getElementById('selected-total-verses').textContent = parashatData.total_verses;
+            document.getElementById('english-preview').textContent = parashatData.english_preview;
+            document.getElementById('hebrew-preview').textContent = parashatData.hebrew_preview;
+        }
+
+        function getSelectedOptionData() {
+            const select = document.getElementById('parashat-select');
+            const selectedOption = select.options[select.selectedIndex];
+            return {
+                title: selectedOption.dataset.title,
+                date: selectedOption.dataset.date,
+                gregorian: selectedOption.dataset.date,
+                ref: selectedOption.dataset.ref
+            };
+        }
+
+        function showParashatDetails() {
+            document.getElementById('parashat-details').style.display = 'block';
+            document.getElementById('preview-section').style.display = 'block';
+            document.getElementById('verse-selection').style.display = 'block';
+            document.getElementById('generate-section').style.display = 'block';
+        }
+
+        function initializeVerseRanges() {
+            console.log('Initializing verse ranges...');
+            console.log('parashatData:', parashatData);
+            
+            const container = document.getElementById('verse-ranges-container');
+            container.innerHTML = '';
+            verseRangeCounter = 0;
+            addVerseRange(true); // Add first range and pre-select
+            
+            // Set the default values for the first range
+            setTimeout(() => {
+                console.log('Setting default values...');
+                const firstRange = document.querySelector('.verse-range-row');
+                if (firstRange) {
+                    console.log('Found first range, setting values...');
+                    const chapterSelects = firstRange.querySelectorAll('.chapter-select');
+                    const verseSelects = firstRange.querySelectorAll('.verse-select');
+                    
+                    console.log('Chapter selects found:', chapterSelects.length);
+                    console.log('Verse selects found:', verseSelects.length);
+                    
+                    // Set first chapter for start
+                    if (chapterSelects[0]) {
+                        const firstChapter = getFirstChapter();
+                        console.log('Setting first chapter select to:', firstChapter);
+                        chapterSelects[0].value = firstChapter;
+                        updateVerseOptions(chapterSelects[0], 'start');
+                    }
+                    
+                    // Set last chapter for end
+                    if (chapterSelects[1]) {
+                        const lastChapter = getLastChapter();
+                        console.log('Setting last chapter select to:', lastChapter);
+                        chapterSelects[1].value = lastChapter;
+                        updateVerseOptions(chapterSelects[1], 'end');
+                    }
+                    
+                    // Set first verse of first chapter
+                    if (verseSelects[0]) {
+                        const firstVerse = getFirstVerseOfFirstChapter();
+                        console.log('Setting first verse select to:', firstVerse);
+                        verseSelects[0].value = firstVerse;
+                    }
+                    
+                    // Set last verse of last chapter
+                    if (verseSelects[1]) {
+                        const lastVerse = getLastVerseOfLastChapter();
+                        console.log('Setting last verse select to:', lastVerse);
+                        verseSelects[1].value = lastVerse;
+                    }
+                    
+                    updateRangePreview();
+                } else {
+                    console.log('No first range found!');
+                }
+            }, 100);
+        }
+
+        function addVerseRange(isFirst = false) {
+            const container = document.getElementById('verse-ranges-container');
+            const rangeId = `range-${verseRangeCounter}`;
+            
+            const rangeRow = document.createElement('div');
+            rangeRow.className = 'verse-range-row flex gap-4 items-end mb-4 p-4 bg-white rounded-lg border';
+            rangeRow.id = rangeId;
+            
+            rangeRow.innerHTML = `
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">From:</label>
+                    <div class="flex gap-2">
+                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'start')">
+                            ${generateChapterOptions()}
+                        </select>
+                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
+                            ${generateVerseOptionsForChapter(getFirstChapter(), isFirst ? getFirstVerseOfFirstChapter() : '')}
+                        </select>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                    <div class="flex gap-2">
+                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'end')">
+                            ${generateChapterOptions()}
+                        </select>
+                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
+                            ${generateVerseOptionsForChapter(getLastChapter(), isFirst ? getLastVerseOfLastChapter() : '')}
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="removeVerseRange('${rangeId}')" 
+                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                        ✕
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(rangeRow);
+            
+            // Set default values for the new range
+            const chapterSelects = rangeRow.querySelectorAll('.chapter-select');
+            const verseSelects = rangeRow.querySelectorAll('.verse-select');
+            
+            if (isFirst) {
+                // For the first range, set full parashat range
+                chapterSelects[0].value = getFirstChapter();
+                chapterSelects[1].value = getLastChapter();
+                
+                // Update verse options for the selected chapters
+                updateVerseOptions(chapterSelects[0], 'start');
+                updateVerseOptions(chapterSelects[1], 'end');
+                
+                // Set verse values
+                verseSelects[0].value = getFirstVerseOfFirstChapter();
+                verseSelects[1].value = getLastVerseOfLastChapter();
+            } else {
+                // For additional ranges, set to first chapter, first verse
+                chapterSelects[0].value = getFirstChapter();
+                chapterSelects[1].value = getFirstChapter();
+                
+                // Update verse options
+                updateVerseOptions(chapterSelects[0], 'start');
+                updateVerseOptions(chapterSelects[1], 'end');
+                
+                // Set to first verse
+                const firstVerse = getFirstVerseOfFirstChapter();
+                verseSelects[0].value = firstVerse;
+                verseSelects[1].value = firstVerse;
+            }
+            
+            verseRangeCounter++;
+            updateRangePreview();
+        }
+
+        function generateVerseOptions(selectedValue = '') {
+            let options = '<option value="">Select...</option>';
+            for (let i = 1; i <= totalVerses; i++) {
+                options += `<option value="${i}" ${i === selectedValue ? 'selected' : ''}>${i}</option>`;
+            }
+            return options;
+        }
+
+        function removeVerseRange(rangeId) {
+            const rangeRow = document.getElementById(rangeId);
+            if (rangeRow) {
+                rangeRow.remove();
+                updateRangePreview();
+            }
+        }
+
+        function setFullRange() {
+            const container = document.getElementById('verse-ranges-container');
+            container.innerHTML = '';
+            
+            const rangeRow = document.createElement('div');
+            rangeRow.className = 'verse-range-row flex gap-4 items-center mb-4 p-4 bg-white rounded-lg border';
+            rangeRow.innerHTML = `
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">From:</label>
+                    <div class="flex gap-2">
+                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'start')">
+                            ${generateChapterOptions()}
+                        </select>
+                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
+                            ${generateVerseOptionsForChapter(getFirstChapter(), getFirstVerseOfFirstChapter())}
+                        </select>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                    <div class="flex gap-2">
+                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'end')">
+                            ${generateChapterOptions()}
+                        </select>
+                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
+                            ${generateVerseOptionsForChapter(getLastChapter(), getLastVerseOfLastChapter())}
+                        </select>
+                    </div>
+                </div>
+            `;
+            
+            // Set the default values
+            const chapterSelects = rangeRow.querySelectorAll('.chapter-select');
+            chapterSelects[0].value = getFirstChapter();
+            chapterSelects[1].value = getLastChapter();
+            
+            // Update verse options for the selected chapters
+            updateVerseOptions(chapterSelects[0], 'start');
+            updateVerseOptions(chapterSelects[1], 'end');
+            
+            container.appendChild(rangeRow);
+            updateRangePreview();
+        }
+        
+        // Get unique chapters from parashat data
+        function getChapters() {
+            if (!parashatData || !parashatData.verses) {
+                console.log('No parashatData or verses found');
+                return [];
+            }
+            const chapters = [...new Set(parashatData.verses.map(v => v.chapter))];
+            console.log('Available chapters:', chapters);
+            return chapters.sort((a, b) => a - b);
+        }
+        
+        // Get first chapter
+        function getFirstChapter() {
+            const chapters = getChapters();
+            const first = chapters.length > 0 ? chapters[0] : 1;
+            console.log('First chapter:', first);
+            return first;
+        }
+        
+        // Get last chapter
+        function getLastChapter() {
+            const chapters = getChapters();
+            const last = chapters.length > 0 ? chapters[chapters.length - 1] : 1;
+            console.log('Last chapter:', last);
+            return last;
+        }
+        
+        // Get first verse of first chapter
+        function getFirstVerseOfFirstChapter() {
+            if (!parashatData || !parashatData.verses) return 1;
+            const firstChapter = getFirstChapter();
+            const firstChapterVerses = parashatData.verses.filter(v => v.chapter === firstChapter);
+            const firstVerse = firstChapterVerses.length > 0 ? firstChapterVerses[0].verse : 1;
+            console.log('First verse of first chapter:', firstVerse);
+            return firstVerse;
+        }
+        
+        // Get last verse of last chapter
+        function getLastVerseOfLastChapter() {
+            if (!parashatData || !parashatData.verses) return 1;
+            const lastChapter = getLastChapter();
+            const lastChapterVerses = parashatData.verses.filter(v => v.chapter === lastChapter);
+            const lastVerse = lastChapterVerses.length > 0 ? lastChapterVerses[lastChapterVerses.length - 1].verse : 1;
+            console.log('Last verse of last chapter:', lastVerse);
+            return lastVerse;
+        }
+        
+        // Generate chapter options
+        function generateChapterOptions() {
+            const chapters = getChapters();
+            let options = '<option value="">Chapter...</option>';
+            chapters.forEach(chapter => {
+                options += `<option value="${chapter}">Chapter ${chapter}</option>`;
+            });
+            console.log('Generated chapter options:', options);
+            return options;
+        }
+        
+        // Generate verse options for a specific chapter
+        function generateVerseOptionsForChapter(chapter, selectedValue = '') {
+            if (!parashatData || !parashatData.verses) {
+                console.log('No parashatData for verse options');
+                return '<option value="">Verse...</option>';
+            }
+            
+            const chapterVerses = parashatData.verses.filter(v => v.chapter === chapter);
+            console.log(`Verses for chapter ${chapter}:`, chapterVerses);
+            
+            let options = '<option value="">Verse...</option>';
+            
+            chapterVerses.forEach(verse => {
+                const isSelected = verse.verse == selectedValue ? 'selected' : '';
+                options += `<option value="${verse.verse}" ${isSelected}>${verse.verse}</option>`;
+            });
+            
+            console.log(`Generated verse options for chapter ${chapter}:`, options);
+            return options;
+        }
+        
+        // Update verse options when chapter changes
+        function updateVerseOptions(chapterSelect, type) {
+            const chapter = parseInt(chapterSelect.value);
+            const verseSelect = chapterSelect.parentNode.querySelector('.verse-select');
+            
+            if (chapter) {
+                verseSelect.innerHTML = generateVerseOptionsForChapter(chapter);
+                // Set default values based on type
+                if (type === 'start') {
+                    const firstVerse = parashatData.verses.find(v => v.chapter === chapter);
+                    if (firstVerse) {
+                        verseSelect.value = firstVerse.verse;
+                    }
+                } else if (type === 'end') {
+                    const lastVerse = parashatData.verses.filter(v => v.chapter === chapter).pop();
+                    if (lastVerse) {
+                        verseSelect.value = lastVerse.verse;
+                    }
+                }
+            } else {
+                verseSelect.innerHTML = '<option value="">Verse...</option>';
+            }
+            
+            updateRangePreview();
+        }
+
+        // Generate PowerPoint
+        async function generatePowerPoint() {
+            if (!currentSelection) {
+                showError('Please select a Parashat first');
+                return;
+            }
+            
+            const verseRanges = getVerseRanges();
+            if (verseRanges.length === 0) {
+                showError('Please add at least one verse range');
+                return;
+            }
+            
+            showPreloader();
+            
+            try {
+                // Build the URL with parameters
+                let url = '/generate?';
+                
+                // Handle different selection types
+                if (currentSelection.type === 'special' || currentSelection.type === 'custom') {
+                    // For special readings and custom verses, use the ref parameter
+                    url += `ref=${encodeURIComponent(currentSelection.ref)}`;
+                } else {
+                    // For regular parashat, use weeks_ahead parameter
+                    url += `weeks_ahead=${currentSelection.weeks_ahead}`;
+                }
+                
+                // Add verse ranges if specified
+                if (verseRanges.length > 0) {
+                    const rangeText = verseRanges.map(r => {
+                        if (r.startChapter && r.endChapter) {
+                            // Chapter-aware format
+                            if (r.startChapter === r.endChapter) {
+                                return `${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`;
+                            } else {
+                                return `${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`;
+                            }
+                        } else {
+                            // Fallback to flat format
+                            return `${r.start}-${r.end}`;
+                        }
+                    }).join(',');
+                    url += `&verse_ranges=${encodeURIComponent(rangeText)}`;
+                }
+                
+                // Create a temporary link to trigger download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = '';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showSuccess('PowerPoint generated successfully!');
+            } catch (error) {
+                console.error('Error generating PowerPoint:', error);
+                showError('Failed to generate PowerPoint');
+            } finally {
+                hidePreloader();
+            }
+        }
+
+        // Load special readings data
+        async function loadSpecialReadingsData() {
+            try {
+                const response = await fetch('/get_special_readings');
+                specialReadingsData = await response.json();
+                populateHolidayCategories();
+            } catch (error) {
+                console.error('Error loading special readings:', error);
+            }
+        }
+        
+        // Populate holiday categories
+        function populateHolidayCategories() {
+            const categorySelect = document.getElementById('holiday-category');
+            categorySelect.innerHTML = '<option value="">Select Holiday/Festival</option>';
+            
+            Object.keys(specialReadingsData).forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+        }
+        
+        // Update holiday reading options
+        function updateHolidayOptions() {
+            const categorySelect = document.getElementById('holiday-category');
+            const readingSelect = document.getElementById('holiday-reading');
+            const applyBtn = document.getElementById('apply-festival-btn');
+            const category = categorySelect.value;
+            
+            readingSelect.innerHTML = '<option value="">Select Reading</option>';
+            applyBtn.disabled = true;
+            
+            if (category && specialReadingsData[category]) {
+                Object.keys(specialReadingsData[category]).forEach(reading => {
+                    const option = document.createElement('option');
+                    option.value = reading;
+                    option.textContent = reading;
+                    readingSelect.appendChild(option);
+                });
+                
+                // Enable Apply button when both category and reading are selected
+                readingSelect.addEventListener('change', function() {
+                    applyBtn.disabled = !this.value;
+                });
+            }
+        }
+        
+        // Load special reading
+        async function loadSpecialReading() {
+            const categorySelect = document.getElementById('holiday-category');
+            const readingSelect = document.getElementById('holiday-reading');
+            const category = categorySelect.value;
+            const reading = readingSelect.value;
+            
+            if (!category || !reading) return;
+            
+            const reference = specialReadingsData[category][reading];
+            if (!reference) return;
+            
+            showPreloader();
+            
+            try {
+                // Use the custom verses endpoint with the reference
+                const [book, chapterVerse] = reference.split(' ');
+                const [chapter, verses] = chapterVerse.split(':');
+                const [startVerse, endVerse] = verses.split('-');
+                
+                const response = await fetch(`/get_custom_verses?book=${book}&start_chapter=${chapter}&start_verse=${startVerse}&end_chapter=${chapter}&end_verse=${endVerse}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSelection = {
+                        ...data,
+                        type: 'special',
+                        category: category,
+                        reading: reading
+                    };
+                    
+                    // Add to main dropdown and select it
+                    addToMainDropdown(data, `Festival: ${category} - ${reading}`);
+                    
+                    updateUIWithSelection(data);
+                    showSuccess(`Festival reading "${category} - ${reading}" loaded successfully!`);
+                } else {
+                    const errorData = await response.json();
+                    showError(`Error loading special reading: ${errorData.error}`);
+                }
+            } catch (error) {
+                console.error('Error loading special reading:', error);
+                showError('Failed to load special reading');
+            } finally {
+                hidePreloader();
+            }
+        }
+        
+        // Load custom verses
+        async function loadCustomVerses() {
+            const book = document.getElementById('custom-book').value.trim();
+            const startChapter = document.getElementById('start-chapter').value.trim();
+            const startVerse = document.getElementById('start-verse').value.trim();
+            const endChapter = document.getElementById('end-chapter').value.trim();
+            const endVerse = document.getElementById('end-verse').value.trim();
+            
+            if (!book || !startChapter || !startVerse || !endChapter || !endVerse) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            showPreloader();
+            
+            try {
+                const response = await fetch(`/get_custom_verses?book=${book}&start_chapter=${startChapter}&start_verse=${startVerse}&end_chapter=${endChapter}&end_verse=${endVerse}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentSelection = {
+                        ...data,
+                        type: 'custom'
+                    };
+                    
+                    // Add to main dropdown and select it
+                    addToMainDropdown(data, `Custom: ${book} ${startChapter}:${startVerse}-${endChapter}:${endVerse}`);
+                    
+                    updateUIWithSelection(data);
+                    showSuccess(`Custom verses "${book} ${startChapter}:${startVerse}-${endChapter}:${endVerse}" loaded successfully!`);
+                } else {
+                    const errorData = await response.json();
+                    showError(`Error loading custom verses: ${errorData.error}`);
+                }
+            } catch (error) {
+                console.error('Error loading custom verses:', error);
+                showError('Failed to load custom verses');
+            } finally {
+                hidePreloader();
+            }
+        }
+        
+        // Toggle special readings section
+        function toggleSpecialReadings() {
+            const section = document.getElementById('special-readings-section');
+            const btn = document.getElementById('special-readings-btn');
+            
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                btn.textContent = '📖 Hide festival readings';
+                loadSpecialReadingsData();
+            } else {
+                section.style.display = 'none';
+                btn.textContent = '📖 Festival readings';
+            }
+        }
+        
+        // Toggle custom verses section
+        function toggleCustomVerses() {
+            const section = document.getElementById('custom-verses-section');
+            const btn = document.getElementById('custom-verses-btn');
+            
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                btn.textContent = '✏️ Hide custom verses';
+            } else {
+                section.style.display = 'none';
+                btn.textContent = '✏️ Custom verses';
+            }
+        }
+
+        // Update UI with selection data
+        function updateUIWithSelection(data) {
+            // Update parashat details
+            document.getElementById('selected-parashat-title').textContent = data.title || 'Custom Reading';
+            document.getElementById('selected-parashat-ref').textContent = data.ref || 'Custom reference';
+            document.getElementById('selected-parashat-gregorian').textContent = data.gregorian_date || 'Custom selection';
+            document.getElementById('selected-parashat-date').textContent = data.hebrew_date || 'Custom selection';
+            document.getElementById('selected-total-verses').textContent = data.total_verses || 0;
+            
+            // Update preview
+            document.getElementById('english-preview').textContent = data.english_preview || '';
+            document.getElementById('hebrew-preview').textContent = data.hebrew_preview || '';
+            
+            // Store data
+            parashatData = data;
+            totalVerses = data.total_verses;
+            
+            // Show sections
+            document.getElementById('parashat-details').style.display = 'block';
+            document.getElementById('preview-section').style.display = 'block';
+            document.getElementById('verse-selection').style.display = 'block';
+            
+            // Initialize verse ranges
+            initializeVerseRanges();
+            
+            // Enable generate button
+            document.getElementById('generate-btn').disabled = false;
+        }
+
+        // Add selection to main dropdown
+        function addToMainDropdown(data, label) {
+            const select = document.getElementById('parashat-select');
+            
+            // Create new option
+            const option = document.createElement('option');
+            option.value = `custom-${Date.now()}`; // Unique identifier
+            option.textContent = label;
+            option.setAttribute('data-title', data.title);
+            option.setAttribute('data-date', data.date_display);
+            
+            // Add to dropdown
+            select.appendChild(option);
+            
+            // Select the new option
+            select.value = option.value;
+            
+            // Trigger change event to update UI
+            select.dispatchEvent(new Event('change'));
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNext4Weeks();
+            
+            // Add event listener for parashat select
+            document.getElementById('parashat-select').addEventListener('change', loadSelectedParashat);
+            
+            // Show action buttons after initial load
+            setTimeout(() => {
+                document.getElementById('other-dates-btn').style.display = 'inline-block';
+                // Festival readings and custom verses buttons hidden for now
+                // document.getElementById('special-readings-btn').style.display = 'inline-block';
+                // document.getElementById('custom-verses-btn').style.display = 'inline-block';
+            }, 1000);
+        });
+
+        // Show success message
+        function showSuccess(message) {
+            // Create a temporary success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.parentNode.removeChild(successDiv);
+                }
+            }, 3000);
+        }
+        
+        // Show error message
+        function showError(message) {
+            // Create a temporary error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+
+        // Show preloader
+        function showPreloader() {
+            document.getElementById('preloader').classList.remove('hidden');
+        }
+
+        // Hide preloader
+        function hidePreloader() {
+            document.getElementById('preloader').classList.add('hidden');
+        }
+
+        function clearAllRanges() {
+            const container = document.getElementById('verse-ranges-container');
+            container.innerHTML = '';
+            updateRangePreview();
+        }
+
+        function updateRangePreview() {
+            const ranges = getVerseRanges();
+            const preview = document.getElementById('range-preview');
+            const generateBtn = document.getElementById('generate-btn');
+            
+            let hasError = false;
+            const rangeTexts = [];
+
+            for (const r of ranges) {
+                if (r.startChapter && r.endChapter) {
+                    // Chapter-aware range
+                    if (r.startChapter > r.endChapter || (r.startChapter === r.endChapter && r.startVerse > r.endVerse)) {
+                        hasError = true;
+                        rangeTexts.push(`<span class="text-red-600 font-bold">${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse} (Invalid)</span>`);
+                    } else {
+                        if (r.startChapter === r.endChapter) {
+                            rangeTexts.push(`${r.startChapter}:${r.startVerse}-${r.endVerse}`);
+                        } else {
+                            rangeTexts.push(`${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`);
+                        }
+                    }
+                } else {
+                    // Fallback to flat indices
+                    if (r.start > r.end) {
+                        hasError = true;
+                        rangeTexts.push(`<span class="text-red-600 font-bold">${r.start}-${r.end} (Invalid)</span>`);
+                    } else {
+                        rangeTexts.push(`${r.start}-${r.end}`);
+                    }
+                }
+            }
+
+            if (rangeTexts.length > 0) {
+                preview.innerHTML = `Selected ranges: ${rangeTexts.join(', ')}`;
+            } else {
+                preview.textContent = 'No ranges selected. Click "Add Another Range" to begin.';
+            }
+
+            if (hasError) {
+                generateBtn.disabled = true;
+                preview.innerHTML += '<br><span class="text-red-600 font-bold">Please correct invalid ranges.</span>';
+            } else {
+                generateBtn.disabled = ranges.length === 0 && totalVerses > 0;
+            }
+        }
+
+        function getVerseRanges() {
+            const ranges = [];
+            const rangeRows = document.querySelectorAll('.verse-range-row');
+            
+            rangeRows.forEach(row => {
+                const chapterSelects = row.querySelectorAll('.chapter-select');
+                const verseSelects = row.querySelectorAll('.verse-select');
+                
+                const startChapter = parseInt(chapterSelects[0].value);
+                const startVerse = parseInt(verseSelects[0].value);
+                const endChapter = parseInt(chapterSelects[1].value);
+                const endVerse = parseInt(verseSelects[1].value);
+                
+                if (startChapter && startVerse && endChapter && endVerse) {
+                    // Check if the range is valid
+                    if (startChapter < endChapter || (startChapter === endChapter && startVerse <= endVerse)) {
+                        ranges.push({
+                            startChapter: startChapter,
+                            startVerse: startVerse,
+                            endChapter: endChapter,
+                            endVerse: endVerse,
+                            // For backward compatibility, also include flat indices
+                            start: getFlatVerseIndex(startChapter, startVerse),
+                            end: getFlatVerseIndex(endChapter, endVerse)
+                        });
+                    }
+                }
+            });
+
+            return ranges;
+        }
+        
+        // Get flat verse index from chapter and verse
+        function getFlatVerseIndex(chapter, verse) {
+            if (!parashatData || !parashatData.verses) return 1;
+            
+            for (let i = 0; i < parashatData.verses.length; i++) {
+                if (parashatData.verses[i].chapter === chapter && parashatData.verses[i].verse === verse) {
+                    return i + 1; // Convert to 1-based index
+                }
+            }
+            return 1;
         }
     </script>
 
