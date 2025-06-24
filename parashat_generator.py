@@ -158,196 +158,140 @@ def create_presentation(data, output, verse_ranges=None):
     prs.slide_height = Inches(7.5)
 
     blank_layout = prs.slide_layouts[6]
-    
     verses_per_slide = 5
-    all_verses = data['verses']
-    total_verses = len(all_verses)
 
-    for i in range(0, total_verses, verses_per_slide):
-        slide = prs.slides.add_slide(blank_layout)
-        
-        verse_chunk = all_verses[i : i + verses_per_slide]
-        
-        # Create title based on original verse ranges if provided
-        if verse_ranges:
-            # Parse the original selected ranges to understand what was selected
-            selected_ranges = []
+    # If verse_ranges is provided, group verses by range
+    if verse_ranges:
+        all_ranges = data.get('ranges')
+        if not all_ranges:
+            flat_verses = data['verses']
             ranges = [r.strip() for r in verse_ranges.split(',')]
+            idx = 0
+            all_ranges = []
             for range_str in ranges:
-                if ':' in range_str:
-                    if '-' in range_str:
-                        start_part, end_part = range_str.split('-')
-                        start_chapter, start_verse = map(int, start_part.split(':'))
-                        
-                        if ':' in end_part:
-                            end_chapter, end_verse = map(int, end_part.split(':'))
-                        else:
-                            end_chapter = start_chapter
-                            end_verse = int(end_part)
-                        
-                        selected_ranges.append({
-                            'start_chapter': start_chapter,
-                            'start_verse': start_verse,
-                            'end_chapter': end_chapter,
-                            'end_verse': end_verse
-                        })
-            
-            # Find which selected ranges are represented on this slide
-            ranges_on_slide = []
-            for selected_range in selected_ranges:
-                # Check if any verse on this slide belongs to this selected range
-                for verse in verse_chunk:
-                    verse_chapter = verse['chapter']
-                    verse_verse = verse['verse']
-                    
-                    # Check if this verse is within the selected range
-                    if selected_range['start_chapter'] == selected_range['end_chapter']:
-                        # Same chapter range
-                        if (verse_chapter == selected_range['start_chapter'] and 
-                            selected_range['start_verse'] <= verse_verse <= selected_range['end_verse']):
-                            ranges_on_slide.append(selected_range)
-                            break
+                parts = range_str.split(':')
+                if len(parts) == 2:
+                    chapter = int(parts[0])
+                    if '-' in parts[1]:
+                        start_verse, end_verse = map(int, parts[1].split('-'))
                     else:
-                        # Different chapter range
-                        if ((selected_range['start_chapter'] < verse_chapter < selected_range['end_chapter']) or
-                            (verse_chapter == selected_range['start_chapter'] and verse_verse >= selected_range['start_verse']) or
-                            (verse_chapter == selected_range['end_chapter'] and verse_verse <= selected_range['end_verse'])):
-                            ranges_on_slide.append(selected_range)
-                            break
-            
-            # Create title from the ranges represented on this slide
-            if ranges_on_slide:
-                range_strings = []
-                for r in ranges_on_slide:
-                    # Find the actual verses from this range that are on this slide
-                    verses_from_range = []
-                    for verse in verse_chunk:
-                        verse_chapter = verse['chapter']
-                        verse_verse = verse['verse']
-                        
-                        # Check if this verse belongs to this range
-                        if r['start_chapter'] == r['end_chapter']:
-                            # Same chapter range
-                            if (verse_chapter == r['start_chapter'] and 
-                                r['start_verse'] <= verse_verse <= r['end_verse']):
-                                verses_from_range.append(verse)
-                        else:
-                            # Different chapter range
-                            if ((r['start_chapter'] < verse_chapter < r['end_chapter']) or
-                                (verse_chapter == r['start_chapter'] and verse_verse >= r['start_verse']) or
-                                (verse_chapter == r['end_chapter'] and verse_verse <= r['end_verse'])):
-                                verses_from_range.append(verse)
+                        start_verse = end_verse = int(parts[1])
+                    count = end_verse - start_verse + 1
+                else:
+                    count = verses_per_slide
+                verses = flat_verses[idx:idx+count]
+                all_ranges.append({'range': range_str, 'book': data.get('book', ''), 'verses': verses})
+                idx += count
+    else:
+        all_ranges = [{'range': None, 'book': data.get('book', ''), 'verses': data['verses']}]
+
+    for group in all_ranges:
+        verses = group['verses']
+        book_name = group.get('book', data.get('book', ''))
+        
+        # Group verses by chapter to ensure each chapter starts on a new slide
+        current_chapter_verses = []
+        current_chapter = None
+        
+        for verse in verses:
+            # If we're starting a new chapter, create a slide for the previous chapter
+            if current_chapter is not None and verse['chapter'] != current_chapter:
+                # Create slide(s) for the previous chapter
+                for i in range(0, len(current_chapter_verses), verses_per_slide):
+                    verse_chunk = current_chapter_verses[i:i+verses_per_slide]
+                    slide = prs.slides.add_slide(blank_layout)
                     
-                    # Create range string for the actual verses on this slide
-                    if verses_from_range:
-                        if len(verses_from_range) == 1:
-                            # Single verse
-                            verse = verses_from_range[0]
-                            range_strings.append(f"{verse['chapter']}:{verse['verse']}")
-                        else:
-                            # Multiple verses - show the actual range
-                            start_verse = verses_from_range[0]
-                            end_verse = verses_from_range[-1]
-                            
-                            if start_verse['chapter'] == end_verse['chapter']:
-                                # Same chapter
-                                range_strings.append(f"{start_verse['chapter']}:{start_verse['verse']}-{end_verse['verse']}")
-                            else:
-                                # Different chapters
-                                range_strings.append(f"{start_verse['chapter']}:{start_verse['verse']}-{end_verse['chapter']}:{end_verse['verse']}")
+                    # Title for this chunk
+                    if len(verse_chunk) == 1:
+                        v = verse_chunk[0]
+                        title_text = f"{book_name} {v['chapter']}:{v['verse']}"
+                    else:
+                        start = verse_chunk[0]
+                        end = verse_chunk[-1]
+                        title_text = f"{book_name} {start['chapter']}:{start['verse']}-{end['verse']}"
+                    
+                    # Add title and content to slide
+                    add_content_to_slide(slide, title_text, verse_chunk, book_name)
                 
-                title_text = f"{data['book']} {', '.join(range_strings)}"
+                # Start new chapter
+                current_chapter_verses = [verse]
+                current_chapter = verse['chapter']
             else:
-                # Fallback: show the actual verses on the slide
+                # Same chapter, add to current group
+                if current_chapter is None:
+                    current_chapter = verse['chapter']
+                current_chapter_verses.append(verse)
+        
+        # Don't forget the last chapter
+        if current_chapter_verses:
+            for i in range(0, len(current_chapter_verses), verses_per_slide):
+                verse_chunk = current_chapter_verses[i:i+verses_per_slide]
+                slide = prs.slides.add_slide(blank_layout)
+                
+                # Title for this chunk
                 if len(verse_chunk) == 1:
-                    verse = verse_chunk[0]
-                    title_text = f"{data['book']} {verse['chapter']}:{verse['verse']}"
+                    v = verse_chunk[0]
+                    title_text = f"{book_name} {v['chapter']}:{v['verse']}"
                 else:
-                    start_verse = verse_chunk[0]
-                    end_verse = verse_chunk[-1]
-                    if start_verse['chapter'] == end_verse['chapter']:
-                        title_text = f"{data['book']} {start_verse['chapter']}:{start_verse['verse']}-{end_verse['verse']}"
-                    else:
-                        title_text = f"{data['book']} {start_verse['chapter']}:{start_verse['verse']} - {end_verse['chapter']}:{end_verse['verse']}"
-        else:
-            # Fallback to the original logic for when no ranges are specified
-            if len(verse_chunk) == 1:
-                # Single verse
-                verse = verse_chunk[0]
-                title_text = f"{data['book']} {verse['chapter']}:{verse['verse']}"
-            else:
-                # Multiple verses - check if they're all in the same chapter
-                chapters_in_chunk = set(v['chapter'] for v in verse_chunk)
-                if len(chapters_in_chunk) == 1:
-                    # All verses in same chapter
-                    chapter = verse_chunk[0]['chapter']
-                    start_verse = verse_chunk[0]['verse']
-                    end_verse = verse_chunk[-1]['verse']
-                    title_text = f"{data['book']} {chapter}:{start_verse}-{end_verse}"
-                else:
-                    # Verses span multiple chapters - show the range
-                    start_verse_obj = verse_chunk[0]
-                    end_verse_obj = verse_chunk[-1]
-                    title_text = f"{data['book']} {start_verse_obj['chapter']}:{start_verse_obj['verse']} - {end_verse_obj['chapter']}:{end_verse_obj['verse']}"
-
-        title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.4), width=Inches(12.333), height=Inches(0.75))
-        tf = title_box.text_frame
-        p = tf.add_paragraph()
-        p.text = title_text
-        p.alignment = PP_ALIGN.CENTER
-        p.font.name = 'Sylfaen'
-        p.font.size = Pt(28)
-        p.font.bold = True
-
-        # Create text content with ellipsis only for gaps
-        en_parts = []
-        he_parts = []
-        
-        for i, verse in enumerate(verse_chunk):
-            # Add ellipsis if there's a gap from the previous verse
-            if i > 0:
-                prev_verse = verse_chunk[i-1]
+                    start = verse_chunk[0]
+                    end = verse_chunk[-1]
+                    title_text = f"{book_name} {start['chapter']}:{start['verse']}-{end['verse']}"
                 
-                # Check if there's a gap in verses or chapters
-                if (prev_verse['chapter'] == verse['chapter'] and 
-                    verse['verse'] != prev_verse['verse'] + 1):
-                    # Gap in verses within same chapter
-                    en_parts.append("...")
-                    he_parts.append("...")
-                elif prev_verse['chapter'] != verse['chapter']:
-                    # Gap in chapters
-                    en_parts.append("...")
-                    he_parts.append("...")
-            
-            en_parts.append(verse['en'])
-            he_parts.append(verse['he'])
-        
-        en_text = " ".join(en_parts)
-        he_text = " ".join(he_parts)
+                # Add title and content to slide
+                add_content_to_slide(slide, title_text, verse_chunk, book_name)
 
-        en_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), width=Inches(6.0), height=Inches(5.8))
-        tf_en = en_box.text_frame
-        tf_en.word_wrap = True
-        p_en = tf_en.add_paragraph()
-        p_en.text = en_text
-        p_en.font.name = 'Sylfaen'
-        p_en.font.size = Pt(20)
-
-        he_box = slide.shapes.add_textbox(Inches(6.833), Inches(1.2), width=Inches(6.0), height=Inches(5.8))
-        tf_he = he_box.text_frame
-        tf_he.word_wrap = True
-        p_he = tf_he.paragraphs[0]
-        p_he.alignment = PP_ALIGN.RIGHT
-        
-        run = p_he.add_run()
-        run.text = he_text
-        font = run.font
-        font.name = 'Times New Roman'
-        font.size = Pt(30)
-        font.bold = True
-    
     prs.save(output)
 
+def add_content_to_slide(slide, title_text, verse_chunk, book_name):
+    """Add title and content to a slide"""
+    # Add title
+    title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.4), width=Inches(12.333), height=Inches(0.75))
+    tf = title_box.text_frame
+    p = tf.add_paragraph()
+    p.text = title_text
+    p.alignment = PP_ALIGN.CENTER
+    p.font.name = 'Sylfaen'
+    p.font.size = Pt(28)
+    p.font.bold = True
+
+    # Add content
+    en_parts = []
+    he_parts = []
+    for j, verse in enumerate(verse_chunk):
+        if j > 0:
+            prev_verse = verse_chunk[j-1]
+            if (prev_verse['chapter'] == verse['chapter'] and verse['verse'] != prev_verse['verse'] + 1):
+                en_parts.append("...")
+                he_parts.append("...")
+            elif prev_verse['chapter'] != verse['chapter']:
+                en_parts.append("...")
+                he_parts.append("...")
+        en_parts.append(verse['en'])
+        he_parts.append(verse['he'])
+    en_text = " ".join(en_parts)
+    he_text = " ".join(he_parts)
+
+    # English text
+    en_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), width=Inches(6.0), height=Inches(5.8))
+    tf_en = en_box.text_frame
+    tf_en.word_wrap = True
+    p_en = tf_en.add_paragraph()
+    p_en.text = en_text
+    p_en.font.name = 'Sylfaen'
+    p_en.font.size = Pt(20)
+
+    # Hebrew text
+    he_box = slide.shapes.add_textbox(Inches(6.833), Inches(1.2), width=Inches(6.0), height=Inches(5.8))
+    tf_he = he_box.text_frame
+    tf_he.word_wrap = True
+    p_he = tf_he.paragraphs[0]
+    p_he.alignment = PP_ALIGN.RIGHT
+    run = p_he.add_run()
+    run.text = he_text
+    font = run.font
+    font.name = 'Times New Roman'
+    font.size = Pt(30)
+    font.bold = True
 
 if __name__ == "__main__":
     print("Fetching weekly Parasha from Sefaria.org...")

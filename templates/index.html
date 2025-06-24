@@ -64,6 +64,12 @@
         .start-section {
             text-align: center;
             margin: 40px 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .start-section.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .start-btn {
@@ -75,13 +81,19 @@
             font-weight: 600;
             padding: 20px 40px;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
         .start-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
         }
 
         .parashat-section {
@@ -149,7 +161,6 @@
         }
 
         .generate-section {
-            display: none;
             text-align: center;
             margin-top: 40px;
         }
@@ -209,6 +220,18 @@
         .custom-input:focus {
             outline: none;
             border-color: #007bff;
+        }
+        
+        /* Move dropdown arrow 5px to the left */
+        .custom-input[type="select"], select.custom-input {
+            padding-right: 35px;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: calc(100% - 10px) center;
+            background-size: 16px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
         }
         
         .input-row {
@@ -322,18 +345,18 @@
             <div class="grid md:grid-cols-3 gap-8">
                 <div class="instruction-step bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border-2 border-blue-200">
                     <div class="text-4xl mb-4">1️⃣</div>
-                    <h3 class="text-xl font-semibold text-blue-800 mb-3">Select Parashat</h3>
-                    <p class="text-gray-700">Select any weekly Parashat from the dropdown. The current week is automatically loaded, or select future weeks.</p>
+                    <h3 class="text-xl font-semibold text-blue-800 mb-3">Start the Tool</h3>
+                    <p class="text-gray-700">Click the "Start" button to load the current week's Parashat data. The tool will automatically fetch and display the weekly reading information.</p>
                 </div>
                 <div class="instruction-step bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border-2 border-green-200">
                     <div class="text-4xl mb-4">2️⃣</div>
-                    <h3 class="text-xl font-semibold text-green-800 mb-3">Select Verses</h3>
-                    <p class="text-gray-700">Select specific verse ranges using the chapter and verse dropdowns. You can select multiple ranges.</p>
+                    <h3 class="text-xl font-semibold text-green-800 mb-3">Select Verse Ranges</h3>
+                    <p class="text-gray-700">Use the verse range selector to choose which verses to include. You can select multiple ranges from different books and chapters. Each range will start on a new slide.</p>
                 </div>
                 <div class="instruction-step bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border-2 border-purple-200">
                     <div class="text-4xl mb-4">3️⃣</div>
                     <h3 class="text-xl font-semibold text-purple-800 mb-3">Generate Presentation</h3>
-                    <p class="text-gray-700">Click "Generate PowerPoint" to create a presentation with your selected verses in both English and Hebrew.</p>
+                    <p class="text-gray-700">Click "Generate PowerPoint" to create a presentation with your selected verses. Each chapter will start on a new slide with both English and Hebrew text.</p>
                 </div>
             </div>
             
@@ -345,96 +368,19 @@
             </div>
         </section>
 
-        <!-- Parashat Selection (initially hidden) -->
-        <section id="parashat-section" class="parashat-section mb-8 bg-white rounded-2xl shadow-xl p-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">📅 Select Parashat</h2>
-            
-            <div class="grid md:grid-cols-1 gap-6">
-                <div>
-                    <p class="text-gray-700 mb-2 font-medium">Choose Parashat from the dropdown:</p>
-                    <select id="parashat-select" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                            onchange="loadSelectedParashat()">
-                        <option value="">Loading...</option>
-                    </select>
-                </div>
-            </div>
-            
-            <!-- Date Picker Section -->
-            <div id="date-picker-section" class="date-picker-section" style="display: none;">
-                <h3>📅 Or select a specific date:</h3>
-                <div class="date-input-group">
-                    <input type="date" id="custom-date" class="date-input">
-                    <button id="load-date-btn" class="load-date-btn" onclick="loadParashatForDate()">
-                        Apply
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Special Readings Section -->
-            <div id="special-readings-section" class="special-readings-section" style="display: none;">
-                <!-- Festival readings section hidden for now -->
-            </div>
-            
-            <!-- Custom Verses Section -->
-            <div id="custom-verses-section" class="custom-verses-section" style="display: none;">
-                <!-- Custom verses section hidden for now -->
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="text-center mt-4">
-                <div class="button-group">
-                    <button id="other-dates-btn" class="action-btn" onclick="toggleDatePicker()" style="display: none;">
-                        📅 Other dates
-                    </button>
-                    <!-- Festival readings and custom verses buttons hidden for now -->
-                    <!--
-                    <button id="special-readings-btn" class="action-btn" onclick="toggleSpecialReadings()" style="display: none;">
-                        📖 Festival readings
-                    </button>
-                    <button id="custom-verses-btn" class="action-btn" onclick="toggleCustomVerses()" style="display: none;">
-                        ✏️ Custom verses
-                    </button>
-                    -->
-                </div>
-            </div>
-        </section>
-
         <!-- Selected Parashat Info & Preview -->
         <section id="parashat-details" class="mb-8 bg-white rounded-2xl shadow-xl p-8" style="display: none;">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 Parashat Details</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 This Week's Parashat</h2>
             <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200">
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>
                         <h3 class="text-xl font-semibold text-indigo-800 mb-2" id="selected-parashat-title"></h3>
                         <p class="text-gray-600 mb-2" id="selected-parashat-ref"></p>
-                        <p class="text-gray-600" id="selected-parashat-gregorian"></p>
-                        <p class="text-gray-600" id="selected-parashat-date"></p>
+                        <p class="text-gray-600 mb-1" id="selected-parashat-date-combined"></p>
                     </div>
                     <div class="text-right">
                         <div class="text-3xl font-bold text-indigo-600" id="selected-total-verses">0</div>
                         <div class="text-gray-600">Total Verses Available</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Preview Section -->
-        <section id="preview-section" class="mb-8 bg-white rounded-2xl shadow-xl p-8" style="display: none;">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">👀 Preview</h2>
-            <div class="bg-gray-50 rounded-xl p-6">
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div>
-                        <h4 class="font-bold mb-3 text-gray-800 border-b pb-2">English</h4>
-                        <div class="bg-white p-4 rounded-lg border max-h-64 overflow-y-auto">
-                            <p class="text-gray-700 leading-relaxed text-sm" id="english-preview"></p>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-bold mb-3 text-gray-800 border-b pb-2">עברית</h4>
-                        <div class="bg-white p-4 rounded-lg border max-h-64 overflow-y-auto">
-                            <p class="font-hebrew text-lg leading-relaxed text-right" dir="rtl" id="hebrew-preview"></p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -447,41 +393,37 @@
                 <p class="text-gray-700 mb-4">
                     <strong>Instructions:</strong> Select which verses to include in your presentation. You can select multiple ranges using the chapter and verse dropdowns.
                 </p>
-                
-                <div id="verse-ranges-container">
-                    <!-- Verse range rows will be added here -->
+                <div id="verse-ranges-container" class="mb-4">
+                    <div class="verse-range-row grid md:grid-cols-5 gap-4 items-end mb-2 font-semibold text-gray-700">
+                        <div>Book</div>
+                        <div>Start Chapter</div>
+                        <div>Start Verse</div>
+                        <div>End Chapter</div>
+                        <div>End Verse</div>
+                    </div>
+                    <!-- Editable verse range rows will be added here by JS -->
                 </div>
-                
+
                 <div class="mt-4 flex gap-4">
-                    <button onclick="addVerseRange()" 
+                    <button type="button" onclick="addVerseRange()" 
                             class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
                         Add Another Range
                     </button>
-                    <button onclick="setFullRange()" 
-                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-                        Use All Verses
-                    </button>
-                    <button onclick="clearAllRanges()" 
+                    <button type="button" onclick="clearAllRanges()" 
                             class="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">
                         Clear All
                     </button>
                 </div>
-                
-                <div id="range-preview" class="mt-4 text-sm text-gray-600"></div>
             </div>
         </section>
 
         <!-- Generate Button Section -->
-        <section id="generate-section" class="generate-section">
+        <section id="generate-section" class="generate-section" style="display: none;">
             <button onclick="generatePowerPoint()"
                    id="generate-btn"
-                   disabled
-                   class="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl px-12 py-6 rounded-2xl shadow-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:transform-none">
+                   class="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl px-12 py-6 rounded-2xl shadow-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105">
                 🚀 Generate PowerPoint Presentation
             </button>
-            <p id="loading-text" class="text-gray-600 mt-4 text-lg" style="display: none;">
-                ⏳ Generating your presentation... Please wait. The download will begin shortly.
-            </p>
         </section>
         
         <!-- Footer -->
@@ -493,1022 +435,195 @@
     </div>
 
     <script>
-        let selectedWeeksAhead = null;
-        let parashatData = null;
-        let totalVerses = 0;
-        let verseRangeCounter = 0;
-        let specialReadingsData = {};
-        let currentSelection = null;
+    window.addEventListener('DOMContentLoaded', function() {
+        // Hide sections by default
+        document.getElementById('parashat-details').style.display = 'none';
+        document.getElementById('generate-section').style.display = 'none';
+    });
 
-        // Hide preloader immediately when page loads
-        window.addEventListener('load', function() {
-            document.getElementById('preloader').classList.add('hidden');
-        });
+    document.getElementById('start-btn').onclick = function() {
+        // Smoothly hide the start button and show loading state
+        const startBtn = document.getElementById('start-btn');
+        const startSection = document.querySelector('.start-section');
+        
+        // Add smooth transition classes
+        startBtn.classList.add('hidden');
+        startSection.classList.add('hidden');
+        
+        // Show loader
+        document.getElementById('preloader').classList.remove('hidden');
+        
+        fetch('/get_parashat_data/0')
+            .then(res => res.json())
+            .then(data => {
+                console.log('DEBUG: Parashat data loaded:', data);
+                // Show and fill parashat details
+                document.getElementById('parashat-details').style.display = '';
+                document.getElementById('verse-selection').style.display = '';
+                document.getElementById('generate-section').style.display = '';
+                document.getElementById('selected-parashat-title').textContent = data.title;
+                document.getElementById('selected-parashat-ref').textContent = data.ref;
+                document.getElementById('selected-parashat-date-combined').textContent = `Read on ${data.gregorian_date} · ${data.hebrew_date}`;
+                document.getElementById('selected-total-verses').textContent = data.total_verses;
 
-        function startApp() {
-            // Hide start button
-            document.getElementById('start-btn').style.display = 'none';
-            
-            // Show preloader
-            document.getElementById('preloader').classList.remove('hidden');
-            
-            // Load next 4 weeks
-            loadNext4Weeks();
-        }
-
-        function loadNext4Weeks() {
-            fetch('/get_next_4_weeks')
-                .then(response => response.json())
-                .then(data => {
-                    const select = document.getElementById('parashat-select');
-                    select.innerHTML = '';
-                    
-                    // Add options for next 4 weeks
-                    data.forEach((item, index) => {
-                        const option = document.createElement('option');
-                        option.value = item.weeks_ahead;
-                        const label = index === 0 ? `(Reading next) ${item.title} - ${item.date_display}` : `${item.title} - ${item.date_display}`;
-                        option.textContent = label;
-                        option.setAttribute('data-title', item.title);
-                        option.setAttribute('data-date', item.date_display);
-                        select.appendChild(option);
-                    });
-                    
-                    // Show parashat section
-                    document.getElementById('parashat-section').style.display = 'block';
-                    
-                    // Show "I need other dates" button
-                    document.getElementById('other-dates-btn').style.display = 'inline-block';
-                    
-                    // Hide preloader
-                    document.getElementById('preloader').classList.add('hidden');
-                    
-                    // Automatically load the first parashat (current week)
-                    if (data.length > 0) {
-                        loadSelectedParashat();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading next 4 weeks:', error);
-                    alert('Error loading Parashat data: ' + error.message);
-                    document.getElementById('preloader').classList.add('hidden');
-                });
-        }
-
-        function loadSelectedParashat() {
-            const select = document.getElementById('parashat-select');
-            const selectedValue = select.value;
-            
-            if (!selectedValue) return;
-            
-            // Check if this is a custom selection (festival or custom verses)
-            if (selectedValue.startsWith('custom-')) {
-                // For custom selections, we already have the data in currentSelection
-                if (currentSelection) {
-                    updateUIWithSelection(currentSelection);
-                }
-                return;
-            }
-            
-            // Check if this is a date-based selection
-            if (selectedValue.startsWith('date-')) {
-                // For date-based selections, we already have the data loaded
-                // Just update the UI with the stored data
-                if (parashatData) {
-                    updateParashatDisplay();
-                    showParashatDetails();
-                    initializeVerseRanges();
-                }
-                return;
-            }
-            
-            // Handle weeks_ahead selections (original functionality)
-            const weeksAhead = parseInt(selectedValue);
-            if (!weeksAhead && weeksAhead !== 0) return;
-            
-            selectedWeeksAhead = weeksAhead;
-
-            // Show preloader
-            document.getElementById('preloader').classList.remove('hidden');
-
-            // Fetch parashat data
-            fetchParashatData(weeksAhead);
-        }
-
-        async function fetchParashatData(weeksAhead) {
-            try {
-                const response = await fetch(`/get_parashat_data/${weeksAhead}`);
-                const data = await response.json();
-                
-                if (data.error) {
-                    console.error('Error fetching parashat data:', data.error);
-                    alert('Error loading Parashat data: ' + data.error);
-                    return;
+                // Pre-fill verse selection with the current parashat range
+                if (data.verses && data.verses.length > 0) {
+                    const first = data.verses[0];
+                    const last = data.verses[data.verses.length - 1];
+                    window.prepopulatedRange = {
+                        book: data.book,
+                        startChapter: first.chapter,
+                        startVerse: first.verse,
+                        endChapter: last.chapter,
+                        endVerse: last.verse
+                    };
+                    // Initialize the verse ranges with the prepopulated data
+                    clearAllRanges();
                 }
                 
-                // Store parashat data
-                parashatData = data;
-                totalVerses = data.total_verses;
-                
-                // Set currentSelection for generate function
-                currentSelection = {
-                    ...data,
-                    type: 'regular',
-                    weeks_ahead: weeksAhead
-                };
-                
-                // Update UI
-                updateParashatDisplay();
-                showParashatDetails();
-                initializeVerseRanges();
-                
-            } catch (error) {
-                console.error('Error fetching parashat data:', error);
-                alert('Error loading Parashat data: ' + error.message);
-            } finally {
-                // Hide preloader
+                // Enable the generate button
+                document.getElementById('generate-btn').disabled = false;
+            })
+            .catch(error => {
+                console.error('Error loading parashat data:', error);
+                // Show error message and restore start button
+                alert('Error loading parashat data. Please try again.');
+                startBtn.classList.remove('hidden');
+                startSection.classList.remove('hidden');
+            })
+            .finally(() => {
+                // Hide loader
                 document.getElementById('preloader').classList.add('hidden');
-            }
+            });
+    };
+
+    let verseRanges = [];
+
+    function createEmptyRange() {
+        return { book: '', startChapter: '', startVerse: '', endChapter: '', endVerse: '' };
+    }
+
+    function addVerseRange() {
+        verseRanges.push(createEmptyRange());
+        renderVerseRanges();
+    }
+
+    function clearAllRanges() {
+        // Use prepopulated range if available, otherwise create empty range
+        if (window.prepopulatedRange) {
+            verseRanges = [window.prepopulatedRange];
+        } else {
+            verseRanges = [createEmptyRange()];
         }
+        renderVerseRanges();
+    }
 
-        function toggleDatePicker() {
-            const datePickerSection = document.getElementById('date-picker-section');
-            const otherDatesBtn = document.getElementById('other-dates-btn');
-            
-            if (datePickerSection.style.display === 'none' || !datePickerSection.style.display) {
-                datePickerSection.style.display = 'block';
-                otherDatesBtn.textContent = '❌ Cancel';
-            } else {
-                datePickerSection.style.display = 'none';
-                otherDatesBtn.textContent = '📅 Other dates';
-            }
-        }
+    function updateRangeField(idx, field, value) {
+        verseRanges[idx][field] = value;
+    }
 
-        function loadParashatForDate() {
-            const selectedDate = document.getElementById('custom-date').value;
-            if (!selectedDate) {
-                alert('Please select a date first.');
-                return;
-            }
-
-            // Show preloader
-            document.getElementById('preloader').classList.remove('hidden');
-            
-            fetch(`/get_parashat_for_date?date=${selectedDate}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert('Error: ' + data.error);
-                        document.getElementById('preloader').classList.add('hidden');
-                        return;
-                    }
-                    
-                    const select = document.getElementById('parashat-select');
-                    
-                    // Check if this date is already in the dropdown
-                    let existingOption = null;
-                    for (let i = 0; i < select.options.length; i++) {
-                        const option = select.options[i];
-                        if (option.getAttribute('data-date') === data.date_display) {
-                            existingOption = option;
-                            break;
-                        }
-                    }
-
-                    if (!existingOption) {
-                        // Add the new parashat to the dropdown if it doesn't exist
-                        const option = document.createElement('option');
-                        option.value = `date-${selectedDate}`; // Use a special prefix for date-based selections
-                        option.textContent = `${data.title} - ${data.date_display}`;
-                        option.setAttribute('data-title', data.title);
-                        option.setAttribute('data-date', data.date_display);
-                        option.setAttribute('data-ref', data.ref);
-                        select.appendChild(option);
-                        existingOption = option;
-                    }
-                    
-                    // Select the option (either existing or newly added)
-                    select.value = existingOption.value;
-                    
-                    // Store parashat data
-                    parashatData = data;
-                    totalVerses = data.total_verses;
-                    selectedWeeksAhead = data.weeks_ahead; // This will be null for date-based selections
-                    
-                    // Set currentSelection for generate function
-                    currentSelection = {
-                        ...data,
-                        type: 'date',
-                        weeks_ahead: data.weeks_ahead
-                    };
-                    
-                    // Update UI
-                    updateParashatDisplay();
-                    showParashatDetails();
-                    initializeVerseRanges();
-                    
-                    // Hide preloader
-                    document.getElementById('preloader').classList.add('hidden');
-                    
-                    // Show the "I need other dates" button again
-                    document.getElementById('other-dates-btn').style.display = 'inline-block';
-                    document.getElementById('other-dates-btn').textContent = '📅 Other dates';
-                    
-                    // Hide date picker
-                    document.getElementById('date-picker-section').style.display = 'none';
-                })
-                .catch(error => {
-                    console.error('Error loading parashat for date:', error);
-                    alert('Error loading Parashat data: ' + error.message);
-                    document.getElementById('preloader').classList.add('hidden');
-                });
-        }
-
-        function updateParashatDisplay() {
-            if (!parashatData) return;
-            
-            document.getElementById('selected-parashat-title').textContent = parashatData.title;
-            document.getElementById('selected-parashat-ref').textContent = parashatData.ref;
-            
-            // Handle date display - check if we have date_display from date picker or need to get from dropdown
-            if (parashatData.date_display) {
-                // Extract gregorian and Hebrew dates from the combined display
-                const parts = parashatData.date_display.split(' · ');
-                if (parts.length === 2) {
-                    document.getElementById('selected-parashat-gregorian').textContent = parts[0];
-                    document.getElementById('selected-parashat-date').textContent = parts[1];
-                } else {
-                    document.getElementById('selected-parashat-gregorian').textContent = parashatData.date_display;
-                    document.getElementById('selected-parashat-date').textContent = '';
-                }
-            } else {
-                const optionData = getSelectedOptionData();
-                const parts = optionData.date.split(' · ');
-                if (parts.length === 2) {
-                    document.getElementById('selected-parashat-gregorian').textContent = parts[0];
-                    document.getElementById('selected-parashat-date').textContent = parts[1];
-                } else {
-                    document.getElementById('selected-parashat-gregorian').textContent = optionData.date;
-                    document.getElementById('selected-parashat-date').textContent = '';
-                }
-            }
-            
-            document.getElementById('selected-total-verses').textContent = parashatData.total_verses;
-            document.getElementById('english-preview').textContent = parashatData.english_preview;
-            document.getElementById('hebrew-preview').textContent = parashatData.hebrew_preview;
-        }
-
-        function getSelectedOptionData() {
-            const select = document.getElementById('parashat-select');
-            const selectedOption = select.options[select.selectedIndex];
-            return {
-                title: selectedOption.dataset.title,
-                date: selectedOption.dataset.date,
-                gregorian: selectedOption.dataset.date,
-                ref: selectedOption.dataset.ref
-            };
-        }
-
-        function showParashatDetails() {
-            document.getElementById('parashat-details').style.display = 'block';
-            document.getElementById('preview-section').style.display = 'block';
-            document.getElementById('verse-selection').style.display = 'block';
-            document.getElementById('generate-section').style.display = 'block';
-        }
-
-        function initializeVerseRanges() {
-            console.log('Initializing verse ranges...');
-            console.log('parashatData:', parashatData);
-            
-            const container = document.getElementById('verse-ranges-container');
-            container.innerHTML = '';
-            verseRangeCounter = 0;
-            addVerseRange(true); // Add first range and pre-select
-            
-            // Set the default values for the first range
-            setTimeout(() => {
-                console.log('Setting default values...');
-                const firstRange = document.querySelector('.verse-range-row');
-                if (firstRange) {
-                    console.log('Found first range, setting values...');
-                    const chapterSelects = firstRange.querySelectorAll('.chapter-select');
-                    const verseSelects = firstRange.querySelectorAll('.verse-select');
-                    
-                    console.log('Chapter selects found:', chapterSelects.length);
-                    console.log('Verse selects found:', verseSelects.length);
-                    
-                    // Set first chapter for start
-                    if (chapterSelects[0]) {
-                        const firstChapter = getFirstChapter();
-                        console.log('Setting first chapter select to:', firstChapter);
-                        chapterSelects[0].value = firstChapter;
-                        updateVerseOptions(chapterSelects[0], 'start');
-                    }
-                    
-                    // Set last chapter for end
-                    if (chapterSelects[1]) {
-                        const lastChapter = getLastChapter();
-                        console.log('Setting last chapter select to:', lastChapter);
-                        chapterSelects[1].value = lastChapter;
-                        updateVerseOptions(chapterSelects[1], 'end');
-                    }
-                    
-                    // Set first verse of first chapter
-                    if (verseSelects[0]) {
-                        const firstVerse = getFirstVerseOfFirstChapter();
-                        console.log('Setting first verse select to:', firstVerse);
-                        verseSelects[0].value = firstVerse;
-                    }
-                    
-                    // Set last verse of last chapter
-                    if (verseSelects[1]) {
-                        const lastVerse = getLastVerseOfLastChapter();
-                        console.log('Setting last verse select to:', lastVerse);
-                        verseSelects[1].value = lastVerse;
-                    }
-                    
-                    updateRangePreview();
-                } else {
-                    console.log('No first range found!');
-                }
-            }, 100);
-        }
-
-        function addVerseRange(isFirst = false) {
-            const container = document.getElementById('verse-ranges-container');
-            const rangeId = `range-${verseRangeCounter}`;
-            
-            const rangeRow = document.createElement('div');
-            rangeRow.className = 'verse-range-row flex gap-4 items-end mb-4 p-4 bg-white rounded-lg border';
-            rangeRow.id = rangeId;
-            
-            rangeRow.innerHTML = `
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">From:</label>
-                    <div class="flex gap-2">
-                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'start')">
-                            ${generateChapterOptions()}
-                        </select>
-                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
-                            ${generateVerseOptionsForChapter(getFirstChapter(), isFirst ? getFirstVerseOfFirstChapter() : '')}
-                        </select>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">To:</label>
-                    <div class="flex gap-2">
-                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'end')">
-                            ${generateChapterOptions()}
-                        </select>
-                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
-                            ${generateVerseOptionsForChapter(getLastChapter(), isFirst ? getLastVerseOfLastChapter() : '')}
-                        </select>
-                    </div>
-                </div>
-                <div class="flex items-end">
-                    <button onclick="removeVerseRange('${rangeId}')" 
-                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-                        ✕
-                    </button>
-                </div>
+    function renderVerseRanges() {
+        const container = document.getElementById('verse-ranges-container');
+        // Remove all except the header row
+        container.innerHTML = `
+            <div class='verse-range-row grid md:grid-cols-5 gap-4 items-end mb-2 font-semibold text-gray-700'>
+                <div>Book</div>
+                <div>Start Chapter</div>
+                <div>Start Verse</div>
+                <div>End Chapter</div>
+                <div>End Verse</div>
+            </div>
+        `;
+        verseRanges.forEach((range, idx) => {
+            const row = document.createElement('div');
+            row.className = 'verse-range-row grid md:grid-cols-5 gap-4 items-end mb-2';
+            row.innerHTML = `
+                <div><select class="custom-input w-full" onchange="updateRangeField(${idx}, 'book', this.value)">
+                    <option value="" disabled selected>Select Book</option>
+                    <option value="Genesis" ${range.book === 'Genesis' ? 'selected' : ''}>Genesis</option>
+                    <option value="Exodus" ${range.book === 'Exodus' ? 'selected' : ''}>Exodus</option>
+                    <option value="Leviticus" ${range.book === 'Leviticus' ? 'selected' : ''}>Leviticus</option>
+                    <option value="Numbers" ${range.book === 'Numbers' ? 'selected' : ''}>Numbers</option>
+                    <option value="Deuteronomy" ${range.book === 'Deuteronomy' ? 'selected' : ''}>Deuteronomy</option>
+                </select></div>
+                <div><input type="number" class="custom-input w-full" min="1" value="${range.startChapter}" onchange="updateRangeField(${idx}, 'startChapter', this.value)"></div>
+                <div><input type="number" class="custom-input w-full" min="1" value="${range.startVerse}" onchange="updateRangeField(${idx}, 'startVerse', this.value)"></div>
+                <div><input type="number" class="custom-input w-full" min="1" value="${range.endChapter}" onchange="updateRangeField(${idx}, 'endChapter', this.value)"></div>
+                <div><input type="number" class="custom-input w-full" min="1" value="${range.endVerse}" onchange="updateRangeField(${idx}, 'endVerse', this.value)"></div>
             `;
-            
-            container.appendChild(rangeRow);
-            
-            // Set default values for the new range
-            const chapterSelects = rangeRow.querySelectorAll('.chapter-select');
-            const verseSelects = rangeRow.querySelectorAll('.verse-select');
-            
-            if (isFirst) {
-                // For the first range, set full parashat range
-                chapterSelects[0].value = getFirstChapter();
-                chapterSelects[1].value = getLastChapter();
-                
-                // Update verse options for the selected chapters
-                updateVerseOptions(chapterSelects[0], 'start');
-                updateVerseOptions(chapterSelects[1], 'end');
-                
-                // Set verse values
-                verseSelects[0].value = getFirstVerseOfFirstChapter();
-                verseSelects[1].value = getLastVerseOfLastChapter();
-            } else {
-                // For additional ranges, set to first chapter, first verse
-                chapterSelects[0].value = getFirstChapter();
-                chapterSelects[1].value = getFirstChapter();
-                
-                // Update verse options
-                updateVerseOptions(chapterSelects[0], 'start');
-                updateVerseOptions(chapterSelects[1], 'end');
-                
-                // Set to first verse
-                const firstVerse = getFirstVerseOfFirstChapter();
-                verseSelects[0].value = firstVerse;
-                verseSelects[1].value = firstVerse;
-            }
-            
-            verseRangeCounter++;
-            updateRangePreview();
-        }
-
-        function generateVerseOptions(selectedValue = '') {
-            let options = '<option value="">Select...</option>';
-            for (let i = 1; i <= totalVerses; i++) {
-                options += `<option value="${i}" ${i === selectedValue ? 'selected' : ''}>${i}</option>`;
-            }
-            return options;
-        }
-
-        function removeVerseRange(rangeId) {
-            const rangeRow = document.getElementById(rangeId);
-            if (rangeRow) {
-                rangeRow.remove();
-                updateRangePreview();
-            }
-        }
-
-        function setFullRange() {
-            const container = document.getElementById('verse-ranges-container');
-            container.innerHTML = '';
-            
-            const rangeRow = document.createElement('div');
-            rangeRow.className = 'verse-range-row flex gap-4 items-center mb-4 p-4 bg-white rounded-lg border';
-            rangeRow.innerHTML = `
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">From:</label>
-                    <div class="flex gap-2">
-                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'start')">
-                            ${generateChapterOptions()}
-                        </select>
-                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
-                            ${generateVerseOptionsForChapter(getFirstChapter(), getFirstVerseOfFirstChapter())}
-                        </select>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">To:</label>
-                    <div class="flex gap-2">
-                        <select class="chapter-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateVerseOptions(this, 'end')">
-                            ${generateChapterOptions()}
-                        </select>
-                        <select class="verse-select w-1/2 px-3 py-2 border border-gray-300 rounded-md" onchange="updateRangePreview()">
-                            ${generateVerseOptionsForChapter(getLastChapter(), getLastVerseOfLastChapter())}
-                        </select>
-                    </div>
-                </div>
-            `;
-            
-            // Set the default values
-            const chapterSelects = rangeRow.querySelectorAll('.chapter-select');
-            chapterSelects[0].value = getFirstChapter();
-            chapterSelects[1].value = getLastChapter();
-            
-            // Update verse options for the selected chapters
-            updateVerseOptions(chapterSelects[0], 'start');
-            updateVerseOptions(chapterSelects[1], 'end');
-            
-            container.appendChild(rangeRow);
-            updateRangePreview();
-        }
-        
-        // Get unique chapters from parashat data
-        function getChapters() {
-            if (!parashatData || !parashatData.verses) {
-                console.log('No parashatData or verses found');
-                return [];
-            }
-            const chapters = [...new Set(parashatData.verses.map(v => v.chapter))];
-            console.log('Available chapters:', chapters);
-            return chapters.sort((a, b) => a - b);
-        }
-        
-        // Get first chapter
-        function getFirstChapter() {
-            const chapters = getChapters();
-            const first = chapters.length > 0 ? chapters[0] : 1;
-            console.log('First chapter:', first);
-            return first;
-        }
-        
-        // Get last chapter
-        function getLastChapter() {
-            const chapters = getChapters();
-            const last = chapters.length > 0 ? chapters[chapters.length - 1] : 1;
-            console.log('Last chapter:', last);
-            return last;
-        }
-        
-        // Get first verse of first chapter
-        function getFirstVerseOfFirstChapter() {
-            if (!parashatData || !parashatData.verses) return 1;
-            const firstChapter = getFirstChapter();
-            const firstChapterVerses = parashatData.verses.filter(v => v.chapter === firstChapter);
-            const firstVerse = firstChapterVerses.length > 0 ? firstChapterVerses[0].verse : 1;
-            console.log('First verse of first chapter:', firstVerse);
-            return firstVerse;
-        }
-        
-        // Get last verse of last chapter
-        function getLastVerseOfLastChapter() {
-            if (!parashatData || !parashatData.verses) return 1;
-            const lastChapter = getLastChapter();
-            const lastChapterVerses = parashatData.verses.filter(v => v.chapter === lastChapter);
-            const lastVerse = lastChapterVerses.length > 0 ? lastChapterVerses[lastChapterVerses.length - 1].verse : 1;
-            console.log('Last verse of last chapter:', lastVerse);
-            return lastVerse;
-        }
-        
-        // Generate chapter options
-        function generateChapterOptions() {
-            const chapters = getChapters();
-            let options = '<option value="">Chapter...</option>';
-            chapters.forEach(chapter => {
-                options += `<option value="${chapter}">Chapter ${chapter}</option>`;
-            });
-            console.log('Generated chapter options:', options);
-            return options;
-        }
-        
-        // Generate verse options for a specific chapter
-        function generateVerseOptionsForChapter(chapter, selectedValue = '') {
-            if (!parashatData || !parashatData.verses) {
-                console.log('No parashatData for verse options');
-                return '<option value="">Verse...</option>';
-            }
-            
-            const chapterVerses = parashatData.verses.filter(v => v.chapter === chapter);
-            console.log(`Verses for chapter ${chapter}:`, chapterVerses);
-            
-            let options = '<option value="">Verse...</option>';
-            
-            chapterVerses.forEach(verse => {
-                const isSelected = verse.verse == selectedValue ? 'selected' : '';
-                options += `<option value="${verse.verse}" ${isSelected}>${verse.verse}</option>`;
-            });
-            
-            console.log(`Generated verse options for chapter ${chapter}:`, options);
-            return options;
-        }
-        
-        // Update verse options when chapter changes
-        function updateVerseOptions(chapterSelect, type) {
-            const chapter = parseInt(chapterSelect.value);
-            const verseSelect = chapterSelect.parentNode.querySelector('.verse-select');
-            
-            if (chapter) {
-                verseSelect.innerHTML = generateVerseOptionsForChapter(chapter);
-                // Set default values based on type
-                if (type === 'start') {
-                    const firstVerse = parashatData.verses.find(v => v.chapter === chapter);
-                    if (firstVerse) {
-                        verseSelect.value = firstVerse.verse;
-                    }
-                } else if (type === 'end') {
-                    const lastVerse = parashatData.verses.filter(v => v.chapter === chapter).pop();
-                    if (lastVerse) {
-                        verseSelect.value = lastVerse.verse;
-                    }
-                }
-            } else {
-                verseSelect.innerHTML = '<option value="">Verse...</option>';
-            }
-            
-            updateRangePreview();
-        }
-
-        // Generate PowerPoint
-        async function generatePowerPoint() {
-            if (!currentSelection) {
-                showError('Please select a Parashat first');
-                return;
-            }
-            
-            const verseRanges = getVerseRanges();
-            if (verseRanges.length === 0) {
-                showError('Please add at least one verse range');
-                return;
-            }
-            
-            showPreloader();
-            
-            try {
-                // Build the URL with parameters
-                let url = '/generate?';
-                
-                // Handle different selection types
-                if (currentSelection.type === 'special' || currentSelection.type === 'custom') {
-                    // For special readings and custom verses, use the ref parameter
-                    url += `ref=${encodeURIComponent(currentSelection.ref)}`;
-                } else {
-                    // For regular parashat, use weeks_ahead parameter
-                    url += `weeks_ahead=${currentSelection.weeks_ahead}`;
-                }
-                
-                // Add verse ranges if specified
-                if (verseRanges.length > 0) {
-                    const rangeText = verseRanges.map(r => {
-                        if (r.startChapter && r.endChapter) {
-                            // Chapter-aware format
-                            if (r.startChapter === r.endChapter) {
-                                return `${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`;
-                            } else {
-                                return `${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`;
-                            }
-                        } else {
-                            // Fallback to flat format
-                            return `${r.start}-${r.end}`;
-                        }
-                    }).join(',');
-                    url += `&verse_ranges=${encodeURIComponent(rangeText)}`;
-                }
-                
-                // Create a temporary link to trigger download
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = '';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showSuccess('PowerPoint generated successfully!');
-            } catch (error) {
-                console.error('Error generating PowerPoint:', error);
-                showError('Failed to generate PowerPoint');
-            } finally {
-                hidePreloader();
-            }
-        }
-
-        // Load special readings data
-        async function loadSpecialReadingsData() {
-            try {
-                const response = await fetch('/get_special_readings');
-                specialReadingsData = await response.json();
-                populateHolidayCategories();
-            } catch (error) {
-                console.error('Error loading special readings:', error);
-            }
-        }
-        
-        // Populate holiday categories
-        function populateHolidayCategories() {
-            const categorySelect = document.getElementById('holiday-category');
-            categorySelect.innerHTML = '<option value="">Select Holiday/Festival</option>';
-            
-            Object.keys(specialReadingsData).forEach(category => {
-                const option = document.createElement('option');
-                option.value = category;
-                option.textContent = category;
-                categorySelect.appendChild(option);
-            });
-        }
-        
-        // Update holiday reading options
-        function updateHolidayOptions() {
-            const categorySelect = document.getElementById('holiday-category');
-            const readingSelect = document.getElementById('holiday-reading');
-            const applyBtn = document.getElementById('apply-festival-btn');
-            const category = categorySelect.value;
-            
-            readingSelect.innerHTML = '<option value="">Select Reading</option>';
-            applyBtn.disabled = true;
-            
-            if (category && specialReadingsData[category]) {
-                Object.keys(specialReadingsData[category]).forEach(reading => {
-                    const option = document.createElement('option');
-                    option.value = reading;
-                    option.textContent = reading;
-                    readingSelect.appendChild(option);
-                });
-                
-                // Enable Apply button when both category and reading are selected
-                readingSelect.addEventListener('change', function() {
-                    applyBtn.disabled = !this.value;
-                });
-            }
-        }
-        
-        // Load special reading
-        async function loadSpecialReading() {
-            const categorySelect = document.getElementById('holiday-category');
-            const readingSelect = document.getElementById('holiday-reading');
-            const category = categorySelect.value;
-            const reading = readingSelect.value;
-            
-            if (!category || !reading) return;
-            
-            const reference = specialReadingsData[category][reading];
-            if (!reference) return;
-            
-            showPreloader();
-            
-            try {
-                // Use the custom verses endpoint with the reference
-                const [book, chapterVerse] = reference.split(' ');
-                const [chapter, verses] = chapterVerse.split(':');
-                const [startVerse, endVerse] = verses.split('-');
-                
-                const response = await fetch(`/get_custom_verses?book=${book}&start_chapter=${chapter}&start_verse=${startVerse}&end_chapter=${chapter}&end_verse=${endVerse}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    currentSelection = {
-                        ...data,
-                        type: 'special',
-                        category: category,
-                        reading: reading
-                    };
-                    
-                    // Add to main dropdown and select it
-                    addToMainDropdown(data, `Festival: ${category} - ${reading}`);
-                    
-                    updateUIWithSelection(data);
-                    showSuccess(`Festival reading "${category} - ${reading}" loaded successfully!`);
-                } else {
-                    const errorData = await response.json();
-                    showError(`Error loading special reading: ${errorData.error}`);
-                }
-            } catch (error) {
-                console.error('Error loading special reading:', error);
-                showError('Failed to load special reading');
-            } finally {
-                hidePreloader();
-            }
-        }
-        
-        // Load custom verses
-        async function loadCustomVerses() {
-            const book = document.getElementById('custom-book').value.trim();
-            const startChapter = document.getElementById('start-chapter').value.trim();
-            const startVerse = document.getElementById('start-verse').value.trim();
-            const endChapter = document.getElementById('end-chapter').value.trim();
-            const endVerse = document.getElementById('end-verse').value.trim();
-            
-            if (!book || !startChapter || !startVerse || !endChapter || !endVerse) {
-                showError('Please fill in all fields');
-                return;
-            }
-            
-            showPreloader();
-            
-            try {
-                const response = await fetch(`/get_custom_verses?book=${book}&start_chapter=${startChapter}&start_verse=${startVerse}&end_chapter=${endChapter}&end_verse=${endVerse}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    currentSelection = {
-                        ...data,
-                        type: 'custom'
-                    };
-                    
-                    // Add to main dropdown and select it
-                    addToMainDropdown(data, `Custom: ${book} ${startChapter}:${startVerse}-${endChapter}:${endVerse}`);
-                    
-                    updateUIWithSelection(data);
-                    showSuccess(`Custom verses "${book} ${startChapter}:${startVerse}-${endChapter}:${endVerse}" loaded successfully!`);
-                } else {
-                    const errorData = await response.json();
-                    showError(`Error loading custom verses: ${errorData.error}`);
-                }
-            } catch (error) {
-                console.error('Error loading custom verses:', error);
-                showError('Failed to load custom verses');
-            } finally {
-                hidePreloader();
-            }
-        }
-        
-        // Toggle special readings section
-        function toggleSpecialReadings() {
-            const section = document.getElementById('special-readings-section');
-            const btn = document.getElementById('special-readings-btn');
-            
-            if (section.style.display === 'none') {
-                section.style.display = 'block';
-                btn.textContent = '📖 Hide festival readings';
-                loadSpecialReadingsData();
-            } else {
-                section.style.display = 'none';
-                btn.textContent = '📖 Festival readings';
-            }
-        }
-        
-        // Toggle custom verses section
-        function toggleCustomVerses() {
-            const section = document.getElementById('custom-verses-section');
-            const btn = document.getElementById('custom-verses-btn');
-            
-            if (section.style.display === 'none') {
-                section.style.display = 'block';
-                btn.textContent = '✏️ Hide custom verses';
-            } else {
-                section.style.display = 'none';
-                btn.textContent = '✏️ Custom verses';
-            }
-        }
-
-        // Update UI with selection data
-        function updateUIWithSelection(data) {
-            // Update parashat details
-            document.getElementById('selected-parashat-title').textContent = data.title || 'Custom Reading';
-            document.getElementById('selected-parashat-ref').textContent = data.ref || 'Custom reference';
-            document.getElementById('selected-parashat-gregorian').textContent = data.gregorian_date || 'Custom selection';
-            document.getElementById('selected-parashat-date').textContent = data.hebrew_date || 'Custom selection';
-            document.getElementById('selected-total-verses').textContent = data.total_verses || 0;
-            
-            // Update preview
-            document.getElementById('english-preview').textContent = data.english_preview || '';
-            document.getElementById('hebrew-preview').textContent = data.hebrew_preview || '';
-            
-            // Store data
-            parashatData = data;
-            totalVerses = data.total_verses;
-            
-            // Show sections
-            document.getElementById('parashat-details').style.display = 'block';
-            document.getElementById('preview-section').style.display = 'block';
-            document.getElementById('verse-selection').style.display = 'block';
-            
-            // Initialize verse ranges
-            initializeVerseRanges();
-            
-            // Enable generate button
-            document.getElementById('generate-btn').disabled = false;
-        }
-
-        // Add selection to main dropdown
-        function addToMainDropdown(data, label) {
-            const select = document.getElementById('parashat-select');
-            
-            // Create new option
-            const option = document.createElement('option');
-            option.value = `custom-${Date.now()}`; // Unique identifier
-            option.textContent = label;
-            option.setAttribute('data-title', data.title);
-            option.setAttribute('data-date', data.date_display);
-            
-            // Add to dropdown
-            select.appendChild(option);
-            
-            // Select the new option
-            select.value = option.value;
-            
-            // Trigger change event to update UI
-            select.dispatchEvent(new Event('change'));
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadNext4Weeks();
-            
-            // Add event listener for parashat select
-            document.getElementById('parashat-select').addEventListener('change', loadSelectedParashat);
-            
-            // Show action buttons after initial load
-            setTimeout(() => {
-                document.getElementById('other-dates-btn').style.display = 'inline-block';
-                // Festival readings and custom verses buttons hidden for now
-                // document.getElementById('special-readings-btn').style.display = 'inline-block';
-                // document.getElementById('custom-verses-btn').style.display = 'inline-block';
-            }, 1000);
+            container.appendChild(row);
         });
+    }
 
-        // Show success message
-        function showSuccess(message) {
-            // Create a temporary success message
-            const successDiv = document.createElement('div');
-            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            successDiv.textContent = message;
-            document.body.appendChild(successDiv);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                if (successDiv.parentNode) {
-                    successDiv.parentNode.removeChild(successDiv);
-                }
-            }, 3000);
-        }
-        
-        // Show error message
-        function showError(message) {
-            // Create a temporary error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            errorDiv.textContent = message;
-            document.body.appendChild(errorDiv);
-            
-            // Remove after 5 seconds
-            setTimeout(() => {
-                if (errorDiv.parentNode) {
-                    errorDiv.parentNode.removeChild(errorDiv);
-                }
-            }, 5000);
-        }
+    function getPrepopulatedRange() {
+        // This function should return the prepopulated range for this week's parashat.
+        // We'll fill it in on page load using the data from /get_parashat_data/0
+        return window.prepopulatedRange || createEmptyRange();
+    }
 
-        // Show preloader
-        function showPreloader() {
-            document.getElementById('preloader').classList.remove('hidden');
-        }
-
-        // Hide preloader
-        function hidePreloader() {
-            document.getElementById('preloader').classList.add('hidden');
-        }
-
-        function clearAllRanges() {
-            const container = document.getElementById('verse-ranges-container');
-            container.innerHTML = '';
-            updateRangePreview();
-        }
-
-        function updateRangePreview() {
-            const ranges = getVerseRanges();
-            const preview = document.getElementById('range-preview');
-            const generateBtn = document.getElementById('generate-btn');
-            
-            let hasError = false;
-            const rangeTexts = [];
-
-            for (const r of ranges) {
-                if (r.startChapter && r.endChapter) {
-                    // Chapter-aware range
-                    if (r.startChapter > r.endChapter || (r.startChapter === r.endChapter && r.startVerse > r.endVerse)) {
-                        hasError = true;
-                        rangeTexts.push(`<span class="text-red-600 font-bold">${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse} (Invalid)</span>`);
-                    } else {
-                        if (r.startChapter === r.endChapter) {
-                            rangeTexts.push(`${r.startChapter}:${r.startVerse}-${r.endVerse}`);
-                        } else {
-                            rangeTexts.push(`${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`);
-                        }
-                    }
+    // On page load, fetch the parashat data and prepopulate the first row
+    window.addEventListener('DOMContentLoaded', function() {
+        fetch('/get_parashat_data/0')
+            .then(res => res.json())
+            .then(data => {
+                if (data.verses && data.verses.length > 0) {
+                    const first = data.verses[0];
+                    const last = data.verses[data.verses.length - 1];
+                    window.prepopulatedRange = {
+                        book: data.book,
+                        startChapter: first.chapter,
+                        startVerse: first.verse,
+                        endChapter: last.chapter,
+                        endVerse: last.verse
+                    };
                 } else {
-                    // Fallback to flat indices
-                    if (r.start > r.end) {
-                        hasError = true;
-                        rangeTexts.push(`<span class="text-red-600 font-bold">${r.start}-${r.end} (Invalid)</span>`);
-                    } else {
-                        rangeTexts.push(`${r.start}-${r.end}`);
-                    }
+                    window.prepopulatedRange = createEmptyRange();
                 }
-            }
-
-            if (rangeTexts.length > 0) {
-                preview.innerHTML = `Selected ranges: ${rangeTexts.join(', ')}`;
-            } else {
-                preview.textContent = 'No ranges selected. Click "Add Another Range" to begin.';
-            }
-
-            if (hasError) {
-                generateBtn.disabled = true;
-                preview.innerHTML += '<br><span class="text-red-600 font-bold">Please correct invalid ranges.</span>';
-            } else {
-                generateBtn.disabled = ranges.length === 0 && totalVerses > 0;
-            }
-        }
-
-        function getVerseRanges() {
-            const ranges = [];
-            const rangeRows = document.querySelectorAll('.verse-range-row');
-            
-            rangeRows.forEach(row => {
-                const chapterSelects = row.querySelectorAll('.chapter-select');
-                const verseSelects = row.querySelectorAll('.verse-select');
-                
-                const startChapter = parseInt(chapterSelects[0].value);
-                const startVerse = parseInt(verseSelects[0].value);
-                const endChapter = parseInt(chapterSelects[1].value);
-                const endVerse = parseInt(verseSelects[1].value);
-                
-                if (startChapter && startVerse && endChapter && endVerse) {
-                    // Check if the range is valid
-                    if (startChapter < endChapter || (startChapter === endChapter && startVerse <= endVerse)) {
-                        ranges.push({
-                            startChapter: startChapter,
-                            startVerse: startVerse,
-                            endChapter: endChapter,
-                            endVerse: endVerse,
-                            // For backward compatibility, also include flat indices
-                            start: getFlatVerseIndex(startChapter, startVerse),
-                            end: getFlatVerseIndex(endChapter, endVerse)
-                        });
-                    }
-                }
+                clearAllRanges();
             });
+    });
 
-            return ranges;
+    function generatePowerPoint() {
+        // Only include fully filled ranges
+        const validRanges = verseRanges.filter(r => r.book && r.startChapter && r.startVerse && r.endChapter && r.endVerse);
+        if (validRanges.length === 0) {
+            alert('Please fill in at least one complete range.');
+            return;
         }
         
-        // Get flat verse index from chapter and verse
-        function getFlatVerseIndex(chapter, verse) {
-            if (!parashatData || !parashatData.verses) return 1;
-            
-            for (let i = 0; i < parashatData.verses.length; i++) {
-                if (parashatData.verses[i].chapter === chapter && parashatData.verses[i].verse === verse) {
-                    return i + 1; // Convert to 1-based index
-                }
+        // Show loading state
+        const generateBtn = document.getElementById('generate-btn');
+        
+        // Disable button and show loading
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generating...';
+        
+        // Create JSON array of range objects
+        const rangeObjects = validRanges.map(r => {
+            let rangeStr;
+            if (r.startChapter === r.endChapter) {
+                rangeStr = `${r.startChapter}:${r.startVerse}-${r.endVerse}`;
+            } else {
+                rangeStr = `${r.startChapter}:${r.startVerse}-${r.endChapter}:${r.endVerse}`;
             }
-            return 1;
-        }
+            return {
+                book: r.book,
+                range: rangeStr
+            };
+        });
+        
+        const verseRangesJson = JSON.stringify(rangeObjects);
+        const defaultBook = validRanges[0].book; // Use first book as default for ref parameter
+        
+        // Navigate to generate endpoint
+        window.location = `/generate?ref=${encodeURIComponent(defaultBook)}&verse_ranges=${encodeURIComponent(verseRangesJson)}`;
+        
+        // Reset button state after a delay (in case of errors)
+        setTimeout(() => {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🚀 Generate PowerPoint Presentation';
+        }, 10000); // 10 second timeout
+    }
     </script>
 
 </body>
